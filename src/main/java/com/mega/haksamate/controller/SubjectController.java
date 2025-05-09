@@ -22,6 +22,15 @@ public class SubjectController {
     public List<Subject> getAll() {
         return subjectRepo.findAll();
     }
-}
 
-// test
+    @PutMapping("/{id}")
+    public Subject updateSubject(@PathVariable Long id, @RequestBody Subject subject) {
+        subject.setId(id); // id 설정
+        return subjectRepo.save(subject);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteSubject(@PathVariable Long id) {
+        subjectRepo.deleteById(id);
+    }
+}

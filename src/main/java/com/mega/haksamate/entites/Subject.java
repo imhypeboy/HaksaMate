@@ -19,5 +19,5 @@ public class Subject {
     private String dayOfWeek;  // 예: "MONDAY"
     private String startTime;  // 예: "09:00"
     private String endTime;    // 예: "10:30"
-    private int priority;
+    private boolean required; // 필수 과목 여부
 }
