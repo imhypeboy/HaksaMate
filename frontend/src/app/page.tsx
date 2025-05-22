@@ -7,8 +7,11 @@ import { Subject, TimetableSlot } from '@/types/subject';
 import { Sun, Moon } from 'lucide-react';
 import axios from 'axios';
 import Sidebar from './sidebar/sidebar';
+import { useRouter } from 'next/navigation';
+import { isAuthenticated, getCurrentUser } from '@/lib/auth';
 
 export default function Page() {
+    const router = useRouter();
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [form, setForm] = useState<Subject>({
         name: '',
@@ -35,6 +38,12 @@ export default function Page() {
     const hours = Array.from({ length: 12 }, (_, i) => i + 9);
 
     useEffect(() => {
+        // 인증 상태 확인
+        if (!isAuthenticated()) {
+            router.push('/auth/login');
+            return;
+        }
+
         loadSubjects();
         if (typeof window !== 'undefined') {
             Modal.setAppElement('body');
@@ -44,7 +53,7 @@ export default function Page() {
                 document.documentElement.classList.add('dark');
             }
         }
-    }, []);
+    }, [router]);
 
     const toggleTheme = () => {
         setDarkMode(!darkMode);
@@ -209,21 +218,29 @@ export default function Page() {
     };
 
     return (
-        <div className="flex min-h-screen transition-colors duration-200">
+        <div className={`flex min-h-screen transition-colors duration-300 ${
+            darkMode
+                ? 'bg-slate-900 text-slate-200'
+                : 'bg-white text-gray-900'
+        }`}>
             {/* 사이드바 영역 */}
             <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
             {/* 메인 콘텐츠 영역 */}
-            <div
-                className={`flex-1 ${darkMode
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-gradient-to-r from-blue-50 to-indigo-50'} font-sans pb-12`}
-            >
-                <header className="bg-blue-800 dark:bg-gray-800 text-white py-4 px-4 flex justify-between items-center shadow-md">
+            <div className="flex-1 font-sans pb-12">
+                <header className={`${
+                    darkMode
+                        ? 'bg-slate-800 text-white'
+                        : 'bg-blue-700 text-white'
+                } py-4 px-4 flex justify-between items-center shadow-md transition-colors duration-300`}>
                     <h1 className="text-2xl font-bold">학사메이트</h1>
                     <button
                         onClick={toggleTheme}
-                        className="p-2 rounded-full hover:bg-blue-700 dark:hover:bg-gray-700 transition-colors"
+                        className={`p-2 rounded-full ${
+                            darkMode
+                                ? 'hover:bg-slate-700'
+                                : 'hover:bg-blue-600'
+                        } transition-colors`}
                         aria-label={darkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
                     >
                         {darkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -231,56 +248,86 @@ export default function Page() {
                 </header>
 
                 {/* 메인 카드 콘텐츠 박스 */}
-                <div className="max-w-4xl mx-auto my-4 sm:my-10 bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-8 shadow-lg text-center transition-colors duration-200">
-                    <h1 className="text-xl sm:text-2xl font-bold mb-6 dark:text-white">📘 수강 시간표 작성</h1>
+                <div className={`max-w-4xl mx-auto my-4 sm:my-10 ${
+                    darkMode
+                        ? 'bg-slate-800'
+                        : 'bg-white'
+                } rounded-xl p-4 sm:p-8 shadow-lg text-center transition-colors duration-300`}>
+                    <h1 className={`text-xl sm:text-2xl font-bold mb-6 ${
+                        darkMode ? 'text-slate-200' : 'text-gray-900'
+                    }`}>📘 수강 시간표 작성</h1>
 
                     <button
                         onClick={() => {
                             resetForm();
                             setShowModal(true);
                         }}
-                        className="bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors mb-6 flex items-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`${
+                            darkMode
+                                ? 'bg-blue-600 hover:bg-blue-500'
+                                : 'bg-blue-700 hover:bg-blue-800'
+                        } text-white py-2 px-4 rounded-md transition-colors mb-6 flex items-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed`}
                         disabled={isLoading}
                     >
                         <span className="mr-1">+</span> 과목 추가
                     </button>
 
                     <div className="text-left mb-6">
-                        <h2 className="text-lg sm:text-xl font-semibold mb-3 dark:text-gray-200">📌 등록된 과목</h2>
+                        <h2 className={`text-lg sm:text-xl font-semibold mb-3 ${
+                            darkMode ? 'text-slate-200' : 'text-gray-900'
+                        }`}>📌 등록된 과목</h2>
                         {isLoading && subjects.length === 0 ? (
                             <div className="text-center py-8">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
-                                <p className="mt-2 text-gray-500 dark:text-gray-400">과목을 불러오는 중...</p>
+                                <div className={`inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 ${
+                                    darkMode ? 'border-blue-400' : 'border-blue-500'
+                                }`}></div>
+                                <p className={`mt-2 ${
+                                    darkMode ? 'text-slate-400' : 'text-gray-500'
+                                }`}>과목을 불러오는 중...</p>
                             </div>
                         ) : (
                             <ul className="space-y-2">
                                 {subjects.length === 0 ? (
-                                    <li className="text-gray-500 dark:text-gray-400 italic text-center py-4">
+                                    <li className={`${
+                                        darkMode ? 'text-slate-400' : 'text-gray-500'
+                                    } italic text-center py-4`}>
                                         등록된 과목이 없습니다. 위 버튼을 눌러 과목을 추가해주세요.
                                     </li>
                                 ) : (
                                     subjects.map(subject => (
                                         <li
                                             key={subject.id}
-                                            className="p-3 border dark:border-gray-700 rounded-md flex justify-between items-center bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                            className={`p-3 ${
+                                                darkMode
+                                                    ? 'border-slate-700 bg-slate-700 hover:bg-slate-600'
+                                                    : 'border bg-gray-50 hover:bg-gray-100'
+                                            } rounded-md flex justify-between items-center transition-colors`}
                                         >
                                             <div>
-                                                <span className="font-semibold">{subject.name}</span>
-                                                <span className="ml-2 text-xs text-gray-400 dark:text-gray-300">
-                        {subject.dayOfWeek} {subject.startTime}~{subject.endTime}{' '}
+                                                <span className={`font-semibold ${
+                                                    darkMode ? 'text-slate-200' : 'text-gray-900'
+                                                }`}>{subject.name}</span>
+                                                <span className={`ml-2 text-xs ${
+                                                    darkMode ? 'text-slate-400' : 'text-gray-400'
+                                                }`}>
+                                                    {subject.dayOfWeek} {subject.startTime}~{subject.endTime}{' '}
                                                     {subject.required && '(필수)'}
-                      </span>
+                                                </span>
                                             </div>
                                             <div className="flex space-x-2">
                                                 <button
                                                     onClick={() => handleEdit(subject)}
-                                                    className="text-blue-700 dark:text-blue-300 hover:underline font-semibold"
+                                                    className={`${
+                                                        darkMode ? 'text-blue-400' : 'text-blue-700'
+                                                    } hover:underline font-semibold`}
                                                 >
                                                     수정
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(subject.id!)}
-                                                    className="text-red-600 dark:text-red-400 hover:underline font-semibold"
+                                                    className={`${
+                                                        darkMode ? 'text-red-400' : 'text-red-600'
+                                                    } hover:underline font-semibold`}
                                                 >
                                                     삭제
                                                 </button>
@@ -294,21 +341,33 @@ export default function Page() {
 
                     <button
                         onClick={handleGenerate}
-                        className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white py-2 px-4 rounded-md transition-colors font-bold mt-4 mb-8"
+                        className={`${
+                            darkMode
+                                ? 'bg-indigo-600 hover:bg-indigo-500'
+                                : 'bg-indigo-600 hover:bg-indigo-700'
+                        } text-white py-2 px-4 rounded-md transition-colors font-bold mt-4 mb-8 disabled:opacity-50`}
                         disabled={subjects.length === 0 || isLoading}
                     >
                         시간표 자동 생성
                     </button>
 
-                    <div className="overflow-x-auto rounded-lg border dark:border-gray-600 mt-4">
-                        <table className="min-w-full bg-white dark:bg-gray-800 border-collapse transition-colors duration-200">
+                    <div className={`overflow-x-auto rounded-lg ${
+                        darkMode ? 'border-slate-700' : 'border'
+                    } mt-4`}>
+                        <table className={`min-w-full ${
+                            darkMode ? 'bg-slate-800' : 'bg-white'
+                        } border-collapse transition-colors duration-300`}>
                             <thead>
                             <tr>
-                                <th className="p-2 bg-blue-50 dark:bg-gray-700 border-b dark:border-gray-600 w-20">시간</th>
+                                <th className={`p-2 ${
+                                    darkMode ? 'bg-slate-700 border-slate-600' : 'bg-blue-50 border-b'
+                                } w-20`}>시간</th>
                                 {days.map(day => (
                                     <th
                                         key={day}
-                                        className="p-2 bg-blue-50 dark:bg-gray-700 border-b dark:border-gray-600"
+                                        className={`p-2 ${
+                                            darkMode ? 'bg-slate-700 border-slate-600' : 'bg-blue-50 border-b'
+                                        }`}
                                     >
                                         {day.slice(0, 3)}
                                     </th>
@@ -318,7 +377,11 @@ export default function Page() {
                             <tbody>
                             {hours.map(hour => (
                                 <tr key={hour}>
-                                    <td className="p-2 text-sm font-bold bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
+                                    <td className={`p-2 text-sm font-bold ${
+                                        darkMode
+                                            ? 'bg-slate-700 border-slate-600'
+                                            : 'bg-gray-100 border-b'
+                                    }`}>
                                         {hour}:00
                                     </td>
                                     {days.map(day => {
@@ -326,13 +389,19 @@ export default function Page() {
                                         const slotSubjects = timetableMap.get(key) || [];
                                         return (
                                             <td
-                                                className="p-2 border-b dark:border-gray-600 text-center"
+                                                className={`p-2 ${
+                                                    darkMode ? 'border-slate-600' : 'border-b'
+                                                } text-center`}
                                                 key={day}
                                             >
                                                 {slotSubjects.length > 0
                                                     ? slotSubjects.map((name, i) => (
                                                         <div
-                                                            className="rounded bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 px-2 py-1 text-xs mb-1"
+                                                            className={`rounded ${
+                                                                darkMode
+                                                                    ? 'bg-blue-800 text-blue-100'
+                                                                    : 'bg-blue-100 text-blue-800'
+                                                            } px-2 py-1 text-xs mb-1`}
                                                             key={i}
                                                         >
                                                             {name}
@@ -353,11 +422,15 @@ export default function Page() {
                     isOpen={showModal}
                     onRequestClose={closeModal}
                     contentLabel="과목 추가/수정"
-                    className="bg-white dark:bg-gray-800 rounded-xl max-w-md mx-auto mt-24 p-6 shadow-lg outline-none"
+                    className={`${
+                        darkMode ? 'bg-slate-800 text-slate-200' : 'bg-white text-gray-900'
+                    } rounded-xl max-w-md mx-auto mt-24 p-6 shadow-lg outline-none transition-colors duration-300`}
                     overlayClassName="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center"
                     ariaHideApp={false}
                 >
-                    <h2 className="text-lg sm:text-xl font-bold mb-4 dark:text-white">
+                    <h2 className={`text-lg sm:text-xl font-bold mb-4 ${
+                        darkMode ? 'text-slate-200' : 'text-gray-900'
+                    }`}>
                         {editMode ? '과목 수정' : '과목 추가'}
                     </h2>
                     <form
@@ -367,10 +440,16 @@ export default function Page() {
                         }}
                     >
                         <div className="mb-4">
-                            <label className="block mb-1 text-sm dark:text-gray-200">과목명</label>
+                            <label className={`block mb-1 text-sm ${
+                                darkMode ? 'text-slate-300' : 'text-gray-700'
+                            }`}>과목명</label>
                             <input
                                 type="text"
-                                className="w-full border px-3 py-2 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                                className={`w-full border px-3 py-2 rounded-md ${
+                                    darkMode
+                                        ? 'bg-slate-700 border-slate-600 text-slate-200'
+                                        : 'bg-gray-50 text-gray-900'
+                                }`}
                                 value={form.name}
                                 onChange={e => setForm({ ...form, name: e.target.value })}
                                 required
@@ -379,9 +458,15 @@ export default function Page() {
 
                         <div className="mb-4 flex gap-2">
                             <div className="w-1/3">
-                                <label className="block mb-1 text-sm dark:text-gray-200">요일</label>
+                                <label className={`block mb-1 text-sm ${
+                                    darkMode ? 'text-slate-300' : 'text-gray-700'
+                                }`}>요일</label>
                                 <select
-                                    className="w-full border px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    className={`w-full border px-2 py-1 rounded-md ${
+                                        darkMode
+                                            ? 'bg-slate-700 border-slate-600 text-slate-200'
+                                            : 'bg-gray-50 text-gray-900'
+                                    }`}
                                     value={form.dayOfWeek}
                                     onChange={e =>
                                         setForm({ ...form, dayOfWeek: e.target.value as Subject['dayOfWeek'] })
@@ -396,9 +481,15 @@ export default function Page() {
                                 </select>
                             </div>
                             <div className="w-1/3">
-                                <label className="block mb-1 text-sm dark:text-gray-200">시작 시간</label>
+                                <label className={`block mb-1 text-sm ${
+                                    darkMode ? 'text-slate-300' : 'text-gray-700'
+                                }`}>시작 시간</label>
                                 <select
-                                    className="w-full border px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    className={`w-full border px-2 py-1 rounded-md ${
+                                        darkMode
+                                            ? 'bg-slate-700 border-slate-600 text-slate-200'
+                                            : 'bg-gray-50 text-gray-900'
+                                    }`}
                                     value={form.startTime}
                                     onChange={e => handleStartTimeChange(e.target.value)}
                                     required
@@ -412,9 +503,15 @@ export default function Page() {
                                 </select>
                             </div>
                             <div className="w-1/3">
-                                <label className="block mb-1 text-sm dark:text-gray-200">종료 시간</label>
+                                <label className={`block mb-1 text-sm ${
+                                    darkMode ? 'text-slate-300' : 'text-gray-700'
+                                }`}>종료 시간</label>
                                 <select
-                                    className="w-full border px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    className={`w-full border px-2 py-1 rounded-md ${
+                                        darkMode
+                                            ? 'bg-slate-700 border-slate-600 text-slate-200'
+                                            : 'bg-gray-50 text-gray-900'
+                                    }`}
                                     value={form.endTime}
                                     onChange={e => setForm({ ...form, endTime: e.target.value })}
                                     required
@@ -439,27 +536,37 @@ export default function Page() {
                                 onChange={e => setForm({ ...form, required: e.target.checked })}
                                 className="mr-2"
                             />
-                            <label htmlFor="required" className="text-sm dark:text-gray-200">
+                            <label htmlFor="required" className={`text-sm ${
+                                darkMode ? 'text-slate-300' : 'text-gray-700'
+                            }`}>
                                 필수 과목
                             </label>
                         </div>
 
                         {timeError && (
-                            <div className="text-red-600 mb-3 text-sm font-semibold">{timeError}</div>
+                            <div className="text-red-500 mb-3 text-sm font-semibold">{timeError}</div>
                         )}
 
                         <div className="flex justify-end gap-2">
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                                className={`px-4 py-2 rounded ${
+                                    darkMode
+                                        ? 'bg-slate-700 text-slate-300'
+                                        : 'bg-gray-100 text-gray-600'
+                                }`}
                                 disabled={isLoading}
                             >
                                 취소
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 rounded bg-blue-700 dark:bg-blue-600 text-white font-semibold disabled:opacity-50"
+                                className={`px-4 py-2 rounded ${
+                                    darkMode
+                                        ? 'bg-blue-600 hover:bg-blue-500'
+                                        : 'bg-blue-700 hover:bg-blue-800'
+                                } text-white font-semibold disabled:opacity-50`}
                                 disabled={isLoading}
                             >
                                 {editMode ? '수정' : '추가'}

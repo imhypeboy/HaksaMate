@@ -12,7 +12,6 @@ interface SidebarProps {
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     const router = useRouter();
     const pathname = usePathname();
-g
     const isActive = (path: string) => pathname === path;
 
     return (
