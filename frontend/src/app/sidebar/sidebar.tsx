@@ -1,18 +1,18 @@
-'use client';
+"use client"
 
-import { Sidebar as ProSidebar, Menu, MenuItem } from 'react-pro-sidebar';
-import { Calendar, MessageSquare, Settings, X, Menu as MenuIcon } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { Sidebar as ProSidebar, Menu, MenuItem } from "react-pro-sidebar"
+import { Calendar, MessageSquare, Settings, X, MenuIcon, GraduationCap, BookOpen } from "lucide-react"
+import { useRouter, usePathname } from "next/navigation"
 
 interface SidebarProps {
-    sidebarOpen: boolean;
-    setSidebarOpen: (open: boolean) => void;
+    sidebarOpen: boolean
+    setSidebarOpen: (open: boolean) => void
 }
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
-    const router = useRouter();
-    const pathname = usePathname();
-    const isActive = (path: string) => pathname === path;
+    const router = useRouter()
+    const pathname = usePathname()
+    const isActive = (path: string) => pathname === path
 
     return (
         <>
@@ -69,17 +69,20 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                         {/* 메뉴 */}
                         <Menu className="mt-4 flex-1">
                             {[
-                                { label: '시간표', icon: <Calendar size={18} />, path: '/' },
-                                { label: '커뮤니티', icon: <MessageSquare size={18} />, path: '/community' },
-                                { label: '설정', icon: <Settings size={18} />, path: '/settings' },
+                                { label: "시간표", icon: <Calendar size={18} />, path: "/" },
+                                { label: "성적 관리", icon: <GraduationCap size={18} />, path: "/grades" },
+                                { label: "시험 일정", icon: <BookOpen size={18} />, path: "/exams" },
+                                { label: "커뮤니티", icon: <MessageSquare size={18} />, path: "/community" },
+                                { label: "설정", icon: <Settings size={18} />, path: "/settings" },
                             ].map(({ label, icon, path }) => (
                                 <MenuItem
                                     key={path}
                                     icon={icon}
                                     className={`mb-2 rounded-lg
-                                        ${isActive(path)
-                                        ? 'text-blue-700 bg-blue-100 font-bold'
-                                        : 'text-gray-600 hover:text-blue-700 hover:bg-blue-50'
+                                        ${
+                                        isActive(path)
+                                            ? "text-blue-700 bg-blue-100 font-bold"
+                                            : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
                                     }
                                         transition-colors
                                     `}
@@ -93,5 +96,5 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                 </ProSidebar>
             </div>
         </>
-    );
+    )
 }
