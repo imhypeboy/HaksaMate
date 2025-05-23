@@ -142,22 +142,24 @@ export default function GradesPage() {
     const filteredGrades = getFilteredGrades()
 
     return (
-        <div className="min-h-screen bg-white text-gray-900">
-            <header className="bg-blue-700 text-white py-4 px-6 flex items-center shadow-md">
+        <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-purple-100 to-pink-100 text-gray-900">
+            <header className="bg-white/20 backdrop-blur-md text-gray-800 py-4 px-6 flex items-center shadow-lg border-b border-white/30">
                 <button
                     onClick={() => router.push("/")}
-                    className="mr-4 hover:bg-blue-600 p-2 rounded-full transition-colors"
+                    className="mr-4 hover:bg-white/20 p-2 rounded-full transition-colors backdrop-blur-sm"
                     aria-label="뒤로 가기"
                 >
                     <ArrowLeft className="h-5 w-5" />
                 </button>
-                <h1 className="text-xl font-bold">성적 관리</h1>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    성적 관리
+                </h1>
             </header>
 
             <div className="max-w-6xl mx-auto py-8 px-4">
                 {/* 통계 카드 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-lg">
+                    <div className="bg-gradient-to-r from-indigo-500/80 to-purple-500/80 backdrop-blur-md text-white p-6 rounded-2xl shadow-xl border border-white/30">
                         <div className="flex items-center">
                             <Award className="h-8 w-8 mr-3" />
                             <div>
@@ -166,7 +168,7 @@ export default function GradesPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg shadow-lg">
+                    <div className="bg-gradient-to-r from-indigo-500/80 to-purple-500/80 backdrop-blur-md text-white p-6 rounded-2xl shadow-xl border border-white/30">
                         <div className="flex items-center">
                             <BookOpen className="h-8 w-8 mr-3" />
                             <div>
@@ -175,7 +177,7 @@ export default function GradesPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-lg">
+                    <div className="bg-gradient-to-r from-indigo-500/80 to-purple-500/80 backdrop-blur-md text-white p-6 rounded-2xl shadow-xl border border-white/30">
                         <div className="flex items-center">
                             <TrendingUp className="h-8 w-8 mr-3" />
                             <div>
@@ -187,13 +189,20 @@ export default function GradesPage() {
                 </div>
 
                 {/* 학기별 GPA */}
-                <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-                    <h2 className="text-xl font-bold mb-4">학기별 성적</h2>
+                <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white/30 p-6 mb-8">
+                    <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        학기별 성적
+                    </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {semesters.map((semester) => (
-                            <div key={semester.name} className="bg-gray-50 p-4 rounded-lg">
+                            <div
+                                key={semester.name}
+                                className="bg-gradient-to-br from-indigo-50/80 to-purple-50/80 backdrop-blur-sm p-4 rounded-xl border border-white/30 shadow-md"
+                            >
                                 <h3 className="font-semibold text-gray-700">{semester.name}</h3>
-                                <p className="text-2xl font-bold text-blue-600">{semester.gpa}</p>
+                                <p className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                    {semester.gpa}
+                                </p>
                                 <p className="text-sm text-gray-500">{semester.totalCredits}학점</p>
                             </div>
                         ))}
@@ -201,7 +210,7 @@ export default function GradesPage() {
                 </div>
 
                 {/* 성적 목록 */}
-                <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white/30 p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-bold">성적 목록</h2>
                         <div className="flex gap-4">
@@ -222,7 +231,7 @@ export default function GradesPage() {
                                     resetForm()
                                     setShowModal(true)
                                 }}
-                                className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-md flex items-center"
+                                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all"
                             >
                                 <Plus className="h-4 w-4 mr-2" />
                                 성적 추가

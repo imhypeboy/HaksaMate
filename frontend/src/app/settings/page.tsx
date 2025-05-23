@@ -31,7 +31,6 @@ export default function SettingsPage() {
     // 일반 설정 상태
     const [generalSettings, setGeneralSettings] = useState({
         language: "ko",
-        darkMode: false,
         autoSave: true,
     })
 
@@ -60,29 +59,33 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-white text-gray-900">
-            <header className="bg-blue-700 text-white py-4 px-6 flex items-center shadow-md">
+        <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-purple-100 to-pink-100 text-gray-900">
+            <header className="bg-white/20 backdrop-blur-md text-gray-800 py-4 px-6 flex items-center shadow-lg border-b border-white/30">
                 <button
                     onClick={() => router.push("/")}
-                    className="mr-4 hover:bg-blue-600 p-2 rounded-full transition-colors"
+                    className="mr-4 hover:bg-white/20 p-2 rounded-full transition-colors backdrop-blur-sm"
                     aria-label="뒤로 가기"
                 >
                     <ArrowLeft className="h-5 w-5" />
                 </button>
-                <h1 className="text-xl font-bold">설정</h1>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    설정
+                </h1>
             </header>
 
             <div className="max-w-5xl mx-auto py-8 px-4">
                 <div className="flex flex-col md:flex-row gap-8">
                     {/* 설정 탭 메뉴 */}
                     <div className="md:w-1/4">
-                        <nav className="bg-gray-50 rounded-lg p-4 sticky top-8">
+                        <nav className="bg-white/60 backdrop-blur-md rounded-2xl p-4 sticky top-8 shadow-lg border border-white/30">
                             <ul className="space-y-1">
                                 <li>
                                     <button
                                         onClick={() => setActiveTab("profile")}
-                                        className={`w-full text-left px-4 py-3 rounded-md flex items-center ${
-                                            activeTab === "profile" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"
+                                        className={`w-full text-left px-4 py-3 rounded-xl flex items-center transition-all ${
+                                            activeTab === "profile"
+                                                ? "bg-gradient-to-r from-indigo-100/80 to-purple-100/80 text-indigo-700 backdrop-blur-sm shadow-md"
+                                                : "hover:bg-white/40 backdrop-blur-sm"
                                         }`}
                                     >
                                         <User className="h-5 w-5 mr-3" />
@@ -92,8 +95,10 @@ export default function SettingsPage() {
                                 <li>
                                     <button
                                         onClick={() => setActiveTab("notifications")}
-                                        className={`w-full text-left px-4 py-3 rounded-md flex items-center ${
-                                            activeTab === "notifications" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"
+                                        className={`w-full text-left px-4 py-3 rounded-xl flex items-center transition-all ${
+                                            activeTab === "notifications"
+                                                ? "bg-gradient-to-r from-indigo-100/80 to-purple-100/80 text-indigo-700 backdrop-blur-sm shadow-md"
+                                                : "hover:bg-white/40 backdrop-blur-sm"
                                         }`}
                                     >
                                         <Bell className="h-5 w-5 mr-3" />
@@ -103,8 +108,10 @@ export default function SettingsPage() {
                                 <li>
                                     <button
                                         onClick={() => setActiveTab("general")}
-                                        className={`w-full text-left px-4 py-3 rounded-md flex items-center ${
-                                            activeTab === "general" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"
+                                        className={`w-full text-left px-4 py-3 rounded-xl flex items-center transition-all ${
+                                            activeTab === "general"
+                                                ? "bg-gradient-to-r from-indigo-100/80 to-purple-100/80 text-indigo-700 backdrop-blur-sm shadow-md"
+                                                : "hover:bg-white/40 backdrop-blur-sm"
                                         }`}
                                     >
                                         <Globe className="h-5 w-5 mr-3" />
@@ -114,8 +121,10 @@ export default function SettingsPage() {
                                 <li>
                                     <button
                                         onClick={() => setActiveTab("security")}
-                                        className={`w-full text-left px-4 py-3 rounded-md flex items-center ${
-                                            activeTab === "security" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"
+                                        className={`w-full text-left px-4 py-3 rounded-xl flex items-center transition-all ${
+                                            activeTab === "security"
+                                                ? "bg-gradient-to-r from-indigo-100/80 to-purple-100/80 text-indigo-700 backdrop-blur-sm shadow-md"
+                                                : "hover:bg-white/40 backdrop-blur-sm"
                                         }`}
                                     >
                                         <Lock className="h-5 w-5 mr-3" />
@@ -136,7 +145,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* 설정 내용 */}
-                    <div className="md:w-3/4 bg-white rounded-lg shadow-sm border p-6">
+                    <div className="md:w-3/4 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white/30 p-6">
                         {activeTab === "profile" && (
                             <div>
                                 <h2 className="text-xl font-bold mb-6">프로필 설정</h2>
@@ -146,7 +155,7 @@ export default function SettingsPage() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
                                             <input
                                                 type="text"
-                                                className="w-full border rounded-md px-3 py-2"
+                                                className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                                 value={profileSettings.name}
                                                 onChange={(e) => setProfileSettings({ ...profileSettings, name: e.target.value })}
                                             />
@@ -155,7 +164,7 @@ export default function SettingsPage() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
                                             <input
                                                 type="email"
-                                                className="w-full border rounded-md px-3 py-2"
+                                                className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                                 value={profileSettings.email}
                                                 onChange={(e) => setProfileSettings({ ...profileSettings, email: e.target.value })}
                                             />
@@ -166,7 +175,7 @@ export default function SettingsPage() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">학과</label>
                                             <input
                                                 type="text"
-                                                className="w-full border rounded-md px-3 py-2"
+                                                className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                                 value={profileSettings.department}
                                                 onChange={(e) => setProfileSettings({ ...profileSettings, department: e.target.value })}
                                             />
@@ -174,7 +183,7 @@ export default function SettingsPage() {
                                         <div className="w-full md:w-1/2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">학년</label>
                                             <select
-                                                className="w-full border rounded-md px-3 py-2"
+                                                className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                                 value={profileSettings.year}
                                                 onChange={(e) => setProfileSettings({ ...profileSettings, year: e.target.value })}
                                             >
@@ -189,7 +198,7 @@ export default function SettingsPage() {
                                         <label className="block text-sm font-medium text-gray-700 mb-1">학번</label>
                                         <input
                                             type="text"
-                                            className="w-full border rounded-md px-3 py-2"
+                                            className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                             value={profileSettings.studentId}
                                             onChange={(e) => setProfileSettings({ ...profileSettings, studentId: e.target.value })}
                                         />
@@ -290,7 +299,7 @@ export default function SettingsPage() {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">언어</label>
                                         <select
-                                            className="w-full border rounded-md px-3 py-2"
+                                            className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                             value={generalSettings.language}
                                             onChange={(e) => setGeneralSettings({ ...generalSettings, language: e.target.value })}
                                         >
@@ -330,7 +339,7 @@ export default function SettingsPage() {
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">현재 비밀번호</label>
                                                 <input
                                                     type="password"
-                                                    className="w-full border rounded-md px-3 py-2"
+                                                    className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                                     placeholder="현재 비밀번호 입력"
                                                 />
                                             </div>
@@ -338,7 +347,7 @@ export default function SettingsPage() {
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">새 비밀번호</label>
                                                 <input
                                                     type="password"
-                                                    className="w-full border rounded-md px-3 py-2"
+                                                    className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                                     placeholder="새 비밀번호 입력"
                                                 />
                                             </div>
@@ -346,7 +355,7 @@ export default function SettingsPage() {
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">새 비밀번호 확인</label>
                                                 <input
                                                     type="password"
-                                                    className="w-full border rounded-md px-3 py-2"
+                                                    className="w-full border border-white/30 rounded-xl px-3 py-2 bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-all"
                                                     placeholder="새 비밀번호 다시 입력"
                                                 />
                                             </div>
@@ -392,7 +401,7 @@ export default function SettingsPage() {
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white rounded-xl flex items-center disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all"
                             >
                                 {saving ? (
                                     <>

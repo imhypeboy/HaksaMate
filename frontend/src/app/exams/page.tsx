@@ -181,21 +181,23 @@ export default function ExamsPage() {
     const upcomingExams = getUpcomingExams()
 
     return (
-        <div className="min-h-screen bg-white text-gray-900">
-            <header className="bg-blue-700 text-white py-4 px-6 flex items-center shadow-md">
+        <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-purple-100 to-pink-100 text-gray-900">
+            <header className="bg-white/20 backdrop-blur-md text-gray-800 py-4 px-6 flex items-center shadow-lg border-b border-white/30">
                 <button
                     onClick={() => router.push("/")}
-                    className="mr-4 hover:bg-blue-600 p-2 rounded-full transition-colors"
+                    className="mr-4 hover:bg-white/20 p-2 rounded-full transition-colors backdrop-blur-sm"
                     aria-label="뒤로 가기"
                 >
                     <ArrowLeft className="h-5 w-5" />
                 </button>
-                <h1 className="text-xl font-bold">시험 일정 관리</h1>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    시험 일정 관리
+                </h1>
             </header>
 
             <div className="max-w-6xl mx-auto py-8 px-4">
                 {/* 다가오는 시험 */}
-                <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-lg shadow-lg mb-8">
+                <div className="bg-gradient-to-r from-orange-500/80 to-red-500/80 backdrop-blur-md text-white p-6 rounded-2xl shadow-xl mb-8 border border-white/30">
                     <h2 className="text-xl font-bold mb-4 flex items-center">
                         <AlertCircle className="h-6 w-6 mr-2" />
                         다가오는 시험
@@ -203,7 +205,7 @@ export default function ExamsPage() {
                     {upcomingExams.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {upcomingExams.map((exam) => (
-                                <div key={exam.id} className="bg-white bg-opacity-20 p-4 rounded-lg">
+                                <div key={exam.id} className="bg-white/20 backdrop-blur-sm p-4 rounded-xl border border-white/30">
                                     <h3 className="font-semibold">{exam.subject}</h3>
                                     <p className="text-sm opacity-90">{exam.type}</p>
                                     <p className="text-sm opacity-90">
@@ -227,7 +229,7 @@ export default function ExamsPage() {
                                 resetForm()
                                 setShowModal(true)
                             }}
-                            className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-md flex items-center"
+                            className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all"
                         >
                             <Plus className="h-4 w-4 mr-2" />
                             시험 추가
@@ -236,7 +238,10 @@ export default function ExamsPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {exams.map((exam) => (
-                            <div key={exam.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div
+                                key={exam.id}
+                                className="bg-white/80 backdrop-blur-md border border-white/30 rounded-2xl p-4 hover:shadow-xl transition-all shadow-lg"
+                            >
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
                                         <h3 className="text-lg font-semibold">{exam.subject}</h3>
@@ -320,7 +325,7 @@ export default function ExamsPage() {
                 isOpen={showModal}
                 onRequestClose={() => setShowModal(false)}
                 contentLabel="시험 추가/수정"
-                className="bg-white text-gray-900 rounded-xl max-w-md mx-auto mt-24 p-6 shadow-lg outline-none"
+                className="bg-white/90 backdrop-blur-md text-gray-900 rounded-2xl max-w-md mx-auto mt-24 p-6 shadow-2xl outline-none border border-white/30"
                 overlayClassName="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center"
                 ariaHideApp={false}
             >
@@ -453,7 +458,7 @@ export default function ExamsPage() {
                 isOpen={showChecklistModal}
                 onRequestClose={() => setShowChecklistModal(false)}
                 contentLabel="시험 준비 체크리스트"
-                className="bg-white text-gray-900 rounded-xl max-w-lg mx-auto mt-24 p-6 shadow-lg outline-none"
+                className="bg-white/90 backdrop-blur-md text-gray-900 rounded-2xl max-w-lg mx-auto mt-24 p-6 shadow-2xl outline-none border border-white/30"
                 overlayClassName="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center"
                 ariaHideApp={false}
             >
