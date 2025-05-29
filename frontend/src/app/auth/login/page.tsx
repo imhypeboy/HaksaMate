@@ -311,7 +311,9 @@ export default function LoginPage() {
 
                 {/* 스크롤 텔링 요소 */}
                 <div className="hidden md:block absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-center text-white">
-                    <p className="text-sm mb-2">학사메이트와 함께하는 스마트한 학교생활</p>
+                    <p className="text-sm mb-2 whitespace-nowrap">
+                        학사메이트와 함께하는 스마트한 학교생활
+                    </p>
                     <div className="animate-bounce">
                         <svg className="mx-auto h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />

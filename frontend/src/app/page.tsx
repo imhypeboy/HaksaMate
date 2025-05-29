@@ -201,44 +201,48 @@ export default function Page() {
     }
 
     return (
-        <div className="flex min-h-screen bg-white text-gray-900 transition-colors duration-300">
+        <div className="flex min-h-screen bg-gradient-to-br from-indigo-200 via-purple-100 to-pink-100 text-gray-900 transition-colors duration-300">
             {/* 사이드바 영역 */}
             <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
             {/* 메인 콘텐츠 영역 */}
             <div className="flex-1 font-sans pb-12">
-                <header className="bg-blue-700 text-white py-6 px-4 flex justify-between items-center shadow-md">
-                    <div className="w-10"></div> {/* Empty div for balance */}
-                    <h1 className="text-2xl font-bold">학사메이트</h1>
+                <header className="bg-white/20 backdrop-blur-md text-gray-800 py-6 px-4 flex justify-between items-center shadow-lg border-b border-white/30">
+                    <div className="w-10"></div>
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        학사메이트
+                    </h1>
                     <button
                         onClick={() => setShowProfileModal(true)}
-                        className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-800 flex items-center justify-center transition-colors"
+                        className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 flex items-center justify-center transition-all shadow-lg"
                         aria-label="프로필"
                     >
-                        <User className="h-5 w-5" />
+                        <User className="h-5 w-5 text-white" />
                     </button>
                 </header>
 
                 {/* 메인 카드 콘텐츠 박스 */}
-                <div className="max-w-4xl mx-auto my-4 sm:my-10 bg-white rounded-xl p-4 sm:p-8 shadow-lg text-center transition-colors duration-300">
-                    <h1 className="text-xl sm:text-2xl font-bold mb-6 text-gray-900">📘 수강 시간표 작성</h1>
+                <div className="max-w-4xl mx-auto my-4 sm:my-10 bg-white/80 backdrop-blur-md rounded-2xl p-4 sm:p-8 shadow-2xl text-center transition-all duration-300 border border-white/30">
+                    <h1 className="text-xl sm:text-2xl font-bold mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        📘 수강 시간표 작성
+                    </h1>
 
                     <button
                         onClick={() => {
                             resetForm()
                             setShowModal(true)
                         }}
-                        className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded-md transition-colors mb-6 flex items-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white py-3 px-6 rounded-xl transition-all mb-6 flex items-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                         disabled={isLoading}
                     >
-                        <span className="mr-1">+</span> 과목 추가
+                        <span className="mr-2">+</span> 과목 추가
                     </button>
 
                     <div className="text-left mb-6">
                         <h2 className="text-lg sm:text-xl font-semibold mb-3 text-gray-900">📌 등록된 과목</h2>
                         {isLoading && subjects.length === 0 ? (
                             <div className="text-center py-8">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
                                 <p className="mt-2 text-gray-500">과목을 불러오는 중...</p>
                             </div>
                         ) : (
@@ -251,7 +255,7 @@ export default function Page() {
                                     subjects.map((subject) => (
                                         <li
                                             key={subject.id}
-                                            className="p-3 border bg-gray-50 hover:bg-gray-100 rounded-md flex justify-between items-center transition-colors"
+                                            className="p-4 bg-white/60 backdrop-blur-sm hover:bg-white/80 rounded-xl flex justify-between items-center transition-all shadow-md hover:shadow-lg border border-white/30"
                                         >
                                             <div>
                                                 <span className="font-semibold text-gray-900">{subject.name}</span>
@@ -262,13 +266,13 @@ export default function Page() {
                                             <div className="flex space-x-2">
                                                 <button
                                                     onClick={() => handleEdit(subject)}
-                                                    className="text-blue-700 hover:underline font-semibold"
+                                                    className="text-indigo-700 hover:text-indigo-900 font-semibold hover:underline"
                                                 >
                                                     수정
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(subject.id!)}
-                                                    className="text-red-600 hover:underline font-semibold"
+                                                    className="text-red-600 hover:text-red-800 font-semibold hover:underline"
                                                 >
                                                     삭제
                                                 </button>
@@ -282,19 +286,24 @@ export default function Page() {
 
                     <button
                         onClick={handleGenerate}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors font-bold mt-4 mb-8 disabled:opacity-50"
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-3 px-6 rounded-xl transition-all font-bold mt-4 mb-8 disabled:opacity-50 shadow-lg hover:shadow-xl"
                         disabled={subjects.length === 0 || isLoading}
                     >
                         시간표 자동 생성
                     </button>
 
-                    <div className="overflow-x-auto rounded-lg border mt-4">
-                        <table className="min-w-full bg-white border-collapse transition-colors duration-300">
+                    <div className="overflow-x-auto rounded-2xl border border-white/30 mt-4 shadow-lg">
+                        <table className="min-w-full bg-white/70 backdrop-blur-sm border-collapse transition-colors duration-300">
                             <thead>
                             <tr>
-                                <th className="p-2 bg-blue-50 border-b w-20">시간</th>
+                                <th className="p-3 bg-gradient-to-r from-indigo-100/80 to-purple-100/80 backdrop-blur-sm border-b border-white/30 w-20 text-gray-700 font-semibold">
+                                    시간
+                                </th>
                                 {days.map((day) => (
-                                    <th key={day} className="p-2 bg-blue-50 border-b">
+                                    <th
+                                        key={day}
+                                        className="p-3 bg-gradient-to-r from-indigo-100/80 to-purple-100/80 backdrop-blur-sm border-b border-white/30 text-gray-700 font-semibold"
+                                    >
                                         {day.slice(0, 3)}
                                     </th>
                                 ))}
@@ -303,15 +312,20 @@ export default function Page() {
                             <tbody>
                             {hours.map((hour) => (
                                 <tr key={hour}>
-                                    <td className="p-2 text-sm font-bold bg-gray-100 border-b">{hour}:00</td>
+                                    <td className="p-2 text-sm font-bold bg-gradient-to-r from-gray-100/80 to-gray-200/80 backdrop-blur-sm border-b border-white/30">
+                                        {hour}:00
+                                    </td>
                                     {days.map((day) => {
                                         const key = `${day}-${hour}`
                                         const slotSubjects = timetableMap.get(key) || []
                                         return (
-                                            <td className="p-2 border-b text-center" key={day}>
+                                            <td className="p-2 border-b border-white/30 text-center" key={day}>
                                                 {slotSubjects.length > 0
                                                     ? slotSubjects.map((name, i) => (
-                                                        <div className="rounded bg-blue-100 text-blue-800 px-2 py-1 text-xs mb-1" key={i}>
+                                                        <div
+                                                            className="rounded-lg bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 px-2 py-1 text-xs mb-1 shadow-sm"
+                                                            key={i}
+                                                        >
                                                             {name}
                                                         </div>
                                                     ))
@@ -330,7 +344,7 @@ export default function Page() {
                     isOpen={showModal}
                     onRequestClose={closeModal}
                     contentLabel="과목 추가/수정"
-                    className="bg-white text-gray-900 rounded-xl max-w-md mx-auto mt-24 p-6 shadow-lg outline-none transition-colors duration-300"
+                    className="bg-white/90 backdrop-blur-md text-gray-900 rounded-2xl max-w-md mx-auto mt-24 p-6 shadow-2xl outline-none transition-colors duration-300 border border-white/30"
                     overlayClassName="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center"
                     ariaHideApp={false}
                 >
@@ -345,7 +359,7 @@ export default function Page() {
                             <label className="block mb-1 text-sm text-gray-700">과목명</label>
                             <input
                                 type="text"
-                                className="w-full border px-3 py-2 rounded-md bg-gray-50 text-gray-900"
+                                className="w-full border border-white/30 px-3 py-2 rounded-xl bg-white/60 backdrop-blur-sm text-gray-900 focus:bg-white/80 transition-all"
                                 value={form.name}
                                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                                 required
@@ -356,7 +370,7 @@ export default function Page() {
                             <div className="w-1/3">
                                 <label className="block mb-1 text-sm text-gray-700">요일</label>
                                 <select
-                                    className="w-full border px-2 py-1 rounded-md bg-gray-50 text-gray-900"
+                                    className="w-full border border-white/30 px-2 py-1 rounded-xl bg-white/60 backdrop-blur-sm text-gray-900 focus:bg-white/80 transition-all"
                                     value={form.dayOfWeek}
                                     onChange={(e) => setForm({ ...form, dayOfWeek: e.target.value as Subject["dayOfWeek"] })}
                                     required
@@ -371,7 +385,7 @@ export default function Page() {
                             <div className="w-1/3">
                                 <label className="block mb-1 text-sm text-gray-700">시작 시간</label>
                                 <select
-                                    className="w-full border px-2 py-1 rounded-md bg-gray-50 text-gray-900"
+                                    className="w-full border border-white/30 px-2 py-1 rounded-xl bg-white/60 backdrop-blur-sm text-gray-900 focus:bg-white/80 transition-all"
                                     value={form.startTime}
                                     onChange={(e) => handleStartTimeChange(e.target.value)}
                                     required
@@ -387,7 +401,7 @@ export default function Page() {
                             <div className="w-1/3">
                                 <label className="block mb-1 text-sm text-gray-700">종료 시간</label>
                                 <select
-                                    className="w-full border px-2 py-1 rounded-md bg-gray-50 text-gray-900"
+                                    className="w-full border border-white/30 px-2 py-1 rounded-xl bg-white/60 backdrop-blur-sm text-gray-900 focus:bg-white/80 transition-all"
                                     value={form.endTime}
                                     onChange={(e) => setForm({ ...form, endTime: e.target.value })}
                                     required
@@ -423,14 +437,14 @@ export default function Page() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="px-4 py-2 rounded bg-gray-100 text-gray-600"
+                                className="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                                 disabled={isLoading}
                             >
                                 취소
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 rounded bg-blue-700 hover:bg-blue-800 text-white font-semibold disabled:opacity-50"
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold disabled:opacity-50 shadow-lg transition-all"
                                 disabled={isLoading}
                             >
                                 {editMode ? "수정" : "추가"}
@@ -443,28 +457,30 @@ export default function Page() {
                     isOpen={showProfileModal}
                     onRequestClose={() => setShowProfileModal(false)}
                     contentLabel="프로필"
-                    className="bg-white text-gray-900 rounded-xl max-w-lg mx-auto mt-24 p-6 shadow-lg outline-none transition-colors duration-300"
+                    className="bg-white/90 backdrop-blur-md text-gray-900 rounded-2xl max-w-lg mx-auto mt-24 p-6 shadow-2xl outline-none transition-colors duration-300 border border-white/30"
                     overlayClassName="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center"
                     ariaHideApp={false}
                 >
                     <div className="flex flex-col items-center">
-                        <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                            <User className="h-12 w-12 text-blue-700" />
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-r from-indigo-100 to-purple-100 flex items-center justify-center mb-4 shadow-lg">
+                            <User className="h-12 w-12 text-indigo-700" />
                         </div>
-                        <h2 className="text-xl font-bold mb-1">홍길동</h2>
+                        <h2 className="text-xl font-bold mb-1 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                            홍길동
+                        </h2>
                         <p className="text-gray-500 mb-4">컴퓨터공학과 • 3학년</p>
 
-                        <div className="w-full border-t pt-4 mt-2">
+                        <div className="w-full border-t border-white/30 pt-4 mt-2">
                             <div className="grid gap-3 w-full">
-                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 backdrop-blur-sm rounded-xl border border-white/30">
                                     <span className="font-medium">학번</span>
                                     <span className="text-gray-600">2021123456</span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 backdrop-blur-sm rounded-xl border border-white/30">
                                     <span className="font-medium">이메일</span>
                                     <span className="text-gray-600">student@university.ac.kr</span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 backdrop-blur-sm rounded-xl border border-white/30">
                                     <span className="font-medium">수강 과목 수</span>
                                     <span className="text-gray-600">{subjects.length}개</span>
                                 </div>
@@ -476,14 +492,14 @@ export default function Page() {
                                         setShowProfileModal(false)
                                         router.push("/settings")
                                     }}
-                                    className="w-full py-2 px-4 bg-blue-700 hover:bg-blue-800 text-white rounded-md transition-colors"
+                                    className="w-full py-2 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl transition-all shadow-lg"
                                 >
                                     설정
                                 </button>
-                                <button className="w-full py-2 px-4 bg-blue-700 hover:bg-blue-800 text-white rounded-md transition-colors">
+                                <button className="w-full py-2 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl transition-all shadow-lg">
                                     내 정보 수정
                                 </button>
-                                <button className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md transition-colors">
+                                <button className="w-full py-2 px-4 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-800 rounded-xl transition-all border border-white/30">
                                     로그아웃
                                 </button>
                             </div>
