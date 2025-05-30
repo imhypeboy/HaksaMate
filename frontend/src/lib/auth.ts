@@ -1,58 +1,63 @@
-import axios from 'axios';
-import { LoginCredentials, RegisterData, AuthResponse } from '@/types/user';
+import { supabase } from './supabaseClient';
 
-// 로그인 API 호출
-export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await axios.post('/api/auth/login', credentials);
-    const data = response.data;
+// 회원가입 (닉네임은 profiles 테이블에도 insert)
+export async function registerUser({
+                                       username,
+                                       email,
+                                       password,
+                                   }: {
+    username: string;
+    email: string;
+    password: string;
+}) {
+    // 1. Auth 등록 (email, password)
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+    });
 
-    // 토큰을 로컬 스토리지에 저장
-    if (data.token) {
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+    if (error) throw error;
+
+    // 2. 유저가 생성되면 profiles 테이블에 닉네임도 저장
+    if (data.user) {
+        const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([{ id: data.user.id, nickname: username, email }]);
+        if (insertError) throw insertError;
     }
 
     return data;
-};
+}
 
-// 회원가입 API 호출
-export const registerUser = async (userData: RegisterData): Promise<AuthResponse> => {
-    const response = await axios.post('/api/auth/register', userData);
-    const data = response.data;
-
-    // 토큰을 로컬 스토리지에 저장
-    if (data.token) {
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-    }
-
+// 로그인
+export async function loginUser({
+                                    email,
+                                    password,
+                                }: {
+    email: string;
+    password: string;
+}) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
     return data;
-};
+}
+
+// 현재 로그인한 유저 정보 가져오기
+export async function getCurrentUser() {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data.user;
+}
+
+// 로그인 여부 확인
+export async function isAuthenticated() {
+    const { data } = await supabase.auth.getUser();
+    return !!data.user;
+}
 
 // 로그아웃
-export const logoutUser = (): void => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    window.location.href = '/auth/login';
-};
-
-// 현재 로그인된 사용자 정보 가져오기
-export const getCurrentUser = () => {
-    if (typeof window === 'undefined') return null;
-
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
-};
-
-// 인증 상태 확인
-export const isAuthenticated = (): boolean => {
-    if (typeof window === 'undefined') return false;
-
-    return !!localStorage.getItem('authToken');
-};
-
-// API 요청에 인증 토큰 추가하는 헤더 생성
-export const authHeader = () => {
-    const token = localStorage.getItem('authToken');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
+export async function logoutUser() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    return true;
+}

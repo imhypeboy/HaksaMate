@@ -7,8 +7,8 @@ import type { Subject, TimetableSlot } from "@/types/subject"
 import Sidebar from "./sidebar/sidebar"
 import { useRouter } from "next/navigation"
 import axios from "axios"
-import { isAuthenticated } from "@/lib/auth"
 import { User } from "lucide-react"
+import { supabase } from '@/lib/supabaseClient'; // supabase 클라이언트
 
 export default function Page() {
     const router = useRouter()
@@ -27,6 +27,8 @@ export default function Page() {
     const [isLoading, setIsLoading] = useState(false)
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [showProfileModal, setShowProfileModal] = useState(false)
+    const [userEmail, setUserEmail] = useState<string | null>(null) // 사용자 이메일
+    const [userId, setUserId] = useState<string | null>(null) // 사용자 uid
 
     const timeOptions = Array.from({ length: 21 }, (_, i) => {
         const hour = Math.floor(i / 2) + 8
@@ -37,15 +39,40 @@ export default function Page() {
     const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
     const hours = Array.from({ length: 12 }, (_, i) => i + 9)
 
+    // Supabase 인증 상태 확인
     useEffect(() => {
-        // 인증 상태 확인
-        if (!isAuthenticated()) {
-            router.push("/auth/login")
-            return
+        const checkAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                router.push("/auth/login")
+                return
+            }
+            setUserEmail(session.user.email || null)
+            setUserId(session.user.id)
+            loadSubjects()
+            if (typeof window !== "undefined") {
+                Modal.setAppElement("body")
+            }
         }
-        loadSubjects()
-        if (typeof window !== "undefined") {
-            Modal.setAppElement("body")
+        checkAuth()
+    }, [router])
+
+    // (필요하다면) 유저 정보 변화 감지
+    useEffect(() => {
+        const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === "SIGNED_OUT" || !session) {
+                router.push("/auth/login")
+            }
+            if (session) {
+                setUserEmail(session.user.email || null)
+                setUserId(session.user.id)
+            } else {
+                setUserEmail(null)
+                setUserId(null)
+            }
+        })
+        return () => {
+            listener.subscription.unsubscribe()
         }
     }, [router])
 
@@ -198,6 +225,14 @@ export default function Page() {
     const closeModal = () => {
         setShowModal(false)
         resetForm()
+    }
+
+    // Supabase 로그아웃 처리
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        setUserEmail(null)
+        setUserId(null)
+        router.push("/auth/login")
     }
 
     return (
@@ -466,19 +501,19 @@ export default function Page() {
                             <User className="h-12 w-12 text-indigo-700" />
                         </div>
                         <h2 className="text-xl font-bold mb-1 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                            홍길동
+                            {userEmail ? userEmail : "로그인 정보 없음"}
                         </h2>
                         <p className="text-gray-500 mb-4">컴퓨터공학과 • 3학년</p>
 
                         <div className="w-full border-t border-white/30 pt-4 mt-2">
                             <div className="grid gap-3 w-full">
                                 <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 backdrop-blur-sm rounded-xl border border-white/30">
-                                    <span className="font-medium">학번</span>
-                                    <span className="text-gray-600">2021123456</span>
+                                    <span className="font-medium">UID</span>
+                                    <span className="text-gray-600">{userId || "-"}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 backdrop-blur-sm rounded-xl border border-white/30">
                                     <span className="font-medium">이메일</span>
-                                    <span className="text-gray-600">student@university.ac.kr</span>
+                                    <span className="text-gray-600">{userEmail || "-"}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 backdrop-blur-sm rounded-xl border border-white/30">
                                     <span className="font-medium">수강 과목 수</span>
@@ -499,7 +534,10 @@ export default function Page() {
                                 <button className="w-full py-2 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl transition-all shadow-lg">
                                     내 정보 수정
                                 </button>
-                                <button className="w-full py-2 px-4 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-800 rounded-xl transition-all border border-white/30">
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full py-2 px-4 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-800 rounded-xl transition-all border border-white/30"
+                                >
                                     로그아웃
                                 </button>
                             </div>
