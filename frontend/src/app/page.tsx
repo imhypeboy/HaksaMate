@@ -2,44 +2,63 @@
 
 import { useEffect, useState, useMemo } from "react"
 import Modal from "react-modal"
-import { fetchSubjects, createSubject, generateTimetable, deleteSubject, updateSubject } from "@/lib/api"
-import type { Subject, TimetableSlot } from "@/types/subject"
 import Sidebar from "./sidebar/sidebar"
 import { useRouter } from "next/navigation"
-import axios from "axios"
-import { User } from "lucide-react"
-import { supabase } from '@/lib/supabaseClient'; // supabase 클라이언트
+import { User as UserIcon } from "lucide-react"
+import { supabase } from '@/lib/supabaseClient'
+
+type Subject = {
+    id?: number
+    name: string
+    dayofweek: string
+    starttime: string
+    endtime: string
+    required: boolean
+    user_id?: string
+}
+type TimetableSlot = {
+    dayofweek: string
+    starttime: string
+    endtime: string
+    subject: Subject
+}
 
 export default function Page() {
     const router = useRouter()
     const [subjects, setSubjects] = useState<Subject[]>([])
-    const [form, setForm] = useState<Subject>({
+    const [form, setForm] = useState<Omit<Subject, "id" | "user_id">>({
         name: "",
-        dayOfWeek: "MONDAY",
-        startTime: "",
-        endTime: "",
+        dayofweek: "MONDAY",
+        starttime: "",
+        endtime: "",
         required: false,
     })
+    const [editId, setEditId] = useState<number | null>(null)
     const [timetable, setTimetable] = useState<TimetableSlot[]>([])
     const [timeError, setTimeError] = useState<string | null>(null)
     const [showModal, setShowModal] = useState(false)
-    const [editMode, setEditMode] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [showProfileModal, setShowProfileModal] = useState(false)
-    const [userEmail, setUserEmail] = useState<string | null>(null) // 사용자 이메일
-    const [userId, setUserId] = useState<string | null>(null) // 사용자 uid
+    const [userEmail, setUserEmail] = useState<string | null>(null)
+    const [userId, setUserId] = useState<string | null>(null)
 
     const timeOptions = Array.from({ length: 21 }, (_, i) => {
         const hour = Math.floor(i / 2) + 8
         const minute = i % 2 === 0 ? "00" : "30"
         return `${hour.toString().padStart(2, "0")}:${minute}`
     })
-
-    const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+    const days = [
+        { label: "MON", value: "MONDAY" },
+        { label: "TUE", value: "TUESDAY" },
+        { label: "WED", value: "WEDNESDAY" },
+        { label: "THU", value: "THURSDAY" },
+        { label: "FRI", value: "FRIDAY" },
+        { label: "SAT", value: "SATURDAY" },
+        { label: "SUN", value: "SUNDAY" },
+    ]
     const hours = Array.from({ length: 12 }, (_, i) => i + 9)
 
-    // Supabase 인증 상태 확인
     useEffect(() => {
         const checkAuth = async () => {
             const { data: { session } } = await supabase.auth.getSession()
@@ -49,16 +68,13 @@ export default function Page() {
             }
             setUserEmail(session.user.email || null)
             setUserId(session.user.id)
-            loadSubjects()
-            if (typeof window !== "undefined") {
-                Modal.setAppElement("body")
-            }
         }
         checkAuth()
     }, [router])
 
-    // (필요하다면) 유저 정보 변화 감지
     useEffect(() => {
+        if (!userId) return
+        loadSubjects(userId)
         const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === "SIGNED_OUT" || !session) {
                 router.push("/auth/login")
@@ -72,26 +88,22 @@ export default function Page() {
             }
         })
         return () => {
-            listener.subscription.unsubscribe()
+            listener?.subscription?.unsubscribe?.()
         }
-    }, [router])
+    }, [router, userId])
 
-    const loadSubjects = async () => {
+    const loadSubjects = async (uid: string) => {
         try {
             setIsLoading(true)
-            const data = await fetchSubjects()
-            setSubjects(data)
-        } catch (error) {
-            console.error("과목 로딩 중 오류 발생:", error)
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 404) {
-                    alert("서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.")
-                } else if (error.response?.status === 500) {
-                    alert("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
-                } else {
-                    alert("과목을 불러오는 중 오류가 발생했습니다.")
-                }
-            }
+            const { data, error } = await supabase
+                .from('subjects')
+                .select('*')
+                .eq('user_id', uid)
+                .order('starttime')
+            if (error) throw error
+            setSubjects(data || [])
+        } catch {
+            alert("과목을 불러오는 중 오류가 발생했습니다.")
         } finally {
             setIsLoading(false)
         }
@@ -102,23 +114,23 @@ export default function Page() {
         return h * 60 + m
     }
 
-    const handleStartTimeChange = (startTime: string) => {
-        const startIndex = timeOptions.findIndex((t) => t === startTime)
+    const handleStartTimeChange = (starttime: string) => {
+        const startIndex = timeOptions.findIndex((t) => t === starttime)
         const defaultEnd = timeOptions[startIndex + 2] || ""
-        setForm((prev) => ({ ...prev, startTime, endTime: defaultEnd }))
+        setForm((prev) => ({ ...prev, starttime, endtime: defaultEnd }))
     }
 
     const handleAddOrUpdate = async () => {
-        if (!form.name || !form.startTime || !form.endTime) {
+        if (!form.name || !form.starttime || !form.endtime) {
             setTimeError("모든 입력을 채워주세요.")
             return
         }
-        if (timeToMinutes(form.startTime) >= timeToMinutes(form.endTime)) {
+        if (timeToMinutes(form.starttime) >= timeToMinutes(form.endtime)) {
             setTimeError("종료 시간이 시작 시간보다 늦어야 합니다.")
             return
         }
         const lastTimeOption = timeOptions[timeOptions.length - 1]
-        if (timeToMinutes(form.endTime) > timeToMinutes(lastTimeOption)) {
+        if (timeToMinutes(form.endtime) > timeToMinutes(lastTimeOption)) {
             setTimeError(`종료 시간은 ${lastTimeOption}를 넘을 수 없습니다.`)
             return
         }
@@ -127,88 +139,113 @@ export default function Page() {
         setIsLoading(true)
 
         try {
-            if (editMode && form.id) {
-                await updateSubject(form)
+            if (!userId) throw new Error("로그인이 필요합니다.")
+            if (editId) {
+                await supabase
+                    .from('subjects')
+                    .update({ ...form })
+                    .eq('id', editId)
+                    .eq('user_id', userId)
             } else {
-                await createSubject(form)
+                await supabase
+                    .from('subjects')
+                    .insert([{ ...form, user_id: userId }])
             }
-            await loadSubjects()
-            setForm({ name: "", dayOfWeek: "MONDAY", startTime: "", endTime: "", required: false })
-            setEditMode(false)
+            await loadSubjects(userId)
+            setForm({ name: "", dayofweek: "MONDAY", starttime: "", endtime: "", required: false })
+            setEditId(null)
             setShowModal(false)
-        } catch (error) {
-            console.error("과목 저장 중 오류 발생:", error)
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 400) {
-                    setTimeError("입력한 데이터가 올바르지 않습니다. 다시 확인해주세요.")
-                } else {
-                    setTimeError("저장 중 오류가 발생했습니다. 다시 시도해주세요.")
-                }
-            } else {
-                setTimeError("저장 중 오류가 발생했습니다. 다시 시도해주세요.")
-            }
+        } catch {
+            setTimeError("저장 중 오류가 발생했습니다. 다시 시도해주세요.")
         } finally {
             setIsLoading(false)
         }
     }
 
     const handleEdit = (subject: Subject) => {
-        setForm(subject)
-        setEditMode(true)
+        setForm({
+            name: subject.name,
+            dayofweek: subject.dayofweek,
+            starttime: subject.starttime,
+            endtime: subject.endtime,
+            required: subject.required,
+        })
+        setEditId(subject.id || null)
         setShowModal(true)
     }
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id?: number) => {
+        if (!userId || !id) return
         if (window.confirm("이 과목을 삭제하시겠습니까?")) {
             setIsLoading(true)
             try {
-                await deleteSubject(id)
-                await loadSubjects()
-            } catch (error) {
-                console.error("과목 삭제 중 오류 발생:", error)
-                if (axios.isAxiosError(error)) {
-                    if (error.response?.status === 404) {
-                        alert("해당 과목을 찾을 수 없습니다.")
-                    } else {
-                        alert("삭제 중 오류가 발생했습니다.")
-                    }
-                } else {
-                    alert("삭제 중 오류가 발생했습니다.")
-                }
+                await supabase
+                    .from('subjects')
+                    .delete()
+                    .eq('id', id)
+                    .eq('user_id', userId)
+                await loadSubjects(userId)
+            } catch {
+                alert("삭제 중 오류가 발생했습니다.")
             } finally {
                 setIsLoading(false)
             }
         }
     }
 
+    // 랜덤 시간표 생성(겹치는 시간 자동 제외)
     const handleGenerate = async () => {
-        setIsLoading(true)
-        try {
-            const result = await generateTimetable()
-            setTimetable(result)
-        } catch (error) {
-            console.error("시간표 생성 중 오류 발생:", error)
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 500) {
-                    alert("시간표를 생성할 수 없습니다. 서버 오류가 발생했습니다.")
-                } else {
-                    alert("시간표 생성 중 오류가 발생했습니다.")
-                }
-            } else {
-                alert("시간표 생성 중 오류가 발생했습니다.")
-            }
-        } finally {
-            setIsLoading(false)
+        if (subjects.length === 0) {
+            setTimetable([])
+            return
         }
+
+        // 우선순위: required=true 먼저, 나머지는 랜덤
+        const required = subjects.filter((s) => s.required)
+        const optional = subjects.filter((s) => !s.required)
+        const optionalShuffled = optional.sort(() => Math.random() - 0.5)
+
+        let selected: Subject[] = [...required]
+        let occupied: { [key: string]: [number, number][] } = {}
+        // 각 요일별로 이미 들어간 시간대를 관리
+
+        for (let subj of selected) {
+            const d = subj.dayofweek
+            if (!occupied[d]) occupied[d] = []
+            occupied[d].push([timeToMinutes(subj.starttime), timeToMinutes(subj.endtime)])
+        }
+
+        for (let subj of optionalShuffled) {
+            const d = subj.dayofweek
+            const s = timeToMinutes(subj.starttime)
+            const e = timeToMinutes(subj.endtime)
+            if (!occupied[d]) occupied[d] = []
+            // 겹침 체크
+            const overlap = occupied[d].some(([os, oe]) => Math.max(os, s) < Math.min(oe, e))
+            if (!overlap) {
+                selected.push(subj)
+                occupied[d].push([s, e])
+            }
+        }
+
+        // timetable 변환
+        const timetable: TimetableSlot[] = selected.map((subject) => ({
+            dayofweek: subject.dayofweek,
+            starttime: subject.starttime,
+            endtime: subject.endtime,
+            subject,
+        }))
+        setTimetable(timetable)
     }
 
+    // 시간표 표시용 맵
     const timetableMap = useMemo(() => {
         const map = new Map<string, string[]>()
         timetable.forEach((slot) => {
-            const startHour = Number.parseInt(slot.startTime.split(":")[0], 10)
-            const endHour = Number.parseInt(slot.endTime.split(":")[0], 10)
+            const startHour = Number.parseInt(slot.starttime.split(":")[0], 10)
+            const endHour = Number.parseInt(slot.endtime.split(":")[0], 10)
             for (let hour = startHour; hour < endHour; hour++) {
-                const key = `${slot.dayOfWeek}-${hour}`
+                const key = `${slot.dayofweek}-${hour}`
                 const existing = map.get(key) || []
                 map.set(key, [...existing, slot.subject.name])
             }
@@ -217,9 +254,9 @@ export default function Page() {
     }, [timetable])
 
     const resetForm = () => {
-        setForm({ name: "", dayOfWeek: "MONDAY", startTime: "", endTime: "", required: false })
+        setForm({ name: "", dayofweek: "MONDAY", starttime: "", endtime: "", required: false })
         setTimeError(null)
-        setEditMode(false)
+        setEditId(null)
     }
 
     const closeModal = () => {
@@ -227,7 +264,6 @@ export default function Page() {
         resetForm()
     }
 
-    // Supabase 로그아웃 처리
     const handleLogout = async () => {
         await supabase.auth.signOut()
         setUserEmail(null)
@@ -237,29 +273,26 @@ export default function Page() {
 
     return (
         <div className="flex min-h-screen bg-gradient-to-br from-indigo-200 via-purple-100 to-pink-100 text-gray-900 transition-colors duration-300">
-            {/* 사이드바 영역 */}
             <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-            {/* 메인 콘텐츠 영역 */}
             <div className="flex-1 font-sans pb-12">
                 <header className="bg-white/20 backdrop-blur-md text-gray-800 py-6 px-4 flex justify-between items-center shadow-lg border-b border-white/30">
                     <div className="w-10"></div>
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        학사메이트
+                        수강 시간표 작성
                     </h1>
                     <button
                         onClick={() => setShowProfileModal(true)}
                         className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 flex items-center justify-center transition-all shadow-lg"
                         aria-label="프로필"
                     >
-                        <User className="h-5 w-5 text-white" />
+                        <UserIcon className="h-5 w-5 text-white" />
                     </button>
                 </header>
 
-                {/* 메인 카드 콘텐츠 박스 */}
                 <div className="max-w-4xl mx-auto my-4 sm:my-10 bg-white/80 backdrop-blur-md rounded-2xl p-4 sm:p-8 shadow-2xl text-center transition-all duration-300 border border-white/30">
                     <h1 className="text-xl sm:text-2xl font-bold mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        📘 수강 시간표 작성
+                        📌 등록된 과목
                     </h1>
 
                     <button
@@ -274,7 +307,6 @@ export default function Page() {
                     </button>
 
                     <div className="text-left mb-6">
-                        <h2 className="text-lg sm:text-xl font-semibold mb-3 text-gray-900">📌 등록된 과목</h2>
                         {isLoading && subjects.length === 0 ? (
                             <div className="text-center py-8">
                                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
@@ -295,8 +327,8 @@ export default function Page() {
                                             <div>
                                                 <span className="font-semibold text-gray-900">{subject.name}</span>
                                                 <span className="ml-2 text-xs text-gray-400">
-                          {subject.dayOfWeek} {subject.startTime}~{subject.endTime} {subject.required && "(필수)"}
-                        </span>
+                                                    {subject.dayofweek} {subject.starttime}~{subject.endtime} {subject.required && "(필수)"}
+                                                </span>
                                             </div>
                                             <div className="flex space-x-2">
                                                 <button
@@ -306,7 +338,7 @@ export default function Page() {
                                                     수정
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(subject.id!)}
+                                                    onClick={() => handleDelete(subject.id)}
                                                     className="text-red-600 hover:text-red-800 font-semibold hover:underline"
                                                 >
                                                     삭제
@@ -327,6 +359,7 @@ export default function Page() {
                         시간표 자동 생성
                     </button>
 
+                    {/* 시간표 양식: 등록된 과목 없어도 항상 출력 */}
                     <div className="overflow-x-auto rounded-2xl border border-white/30 mt-4 shadow-lg">
                         <table className="min-w-full bg-white/70 backdrop-blur-sm border-collapse transition-colors duration-300">
                             <thead>
@@ -336,10 +369,10 @@ export default function Page() {
                                 </th>
                                 {days.map((day) => (
                                     <th
-                                        key={day}
+                                        key={day.value}
                                         className="p-3 bg-gradient-to-r from-indigo-100/80 to-purple-100/80 backdrop-blur-sm border-b border-white/30 text-gray-700 font-semibold"
                                     >
-                                        {day.slice(0, 3)}
+                                        {day.label}
                                     </th>
                                 ))}
                             </tr>
@@ -351,10 +384,10 @@ export default function Page() {
                                         {hour}:00
                                     </td>
                                     {days.map((day) => {
-                                        const key = `${day}-${hour}`
+                                        const key = `${day.value}-${hour}`
                                         const slotSubjects = timetableMap.get(key) || []
                                         return (
-                                            <td className="p-2 border-b border-white/30 text-center" key={day}>
+                                            <td className="p-2 border-b border-white/30 text-center" key={day.value}>
                                                 {slotSubjects.length > 0
                                                     ? slotSubjects.map((name, i) => (
                                                         <div
@@ -383,7 +416,7 @@ export default function Page() {
                     overlayClassName="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center"
                     ariaHideApp={false}
                 >
-                    <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-900">{editMode ? "과목 수정" : "과목 추가"}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-900">{editId ? "과목 수정" : "과목 추가"}</h2>
                     <form
                         onSubmit={(e) => {
                             e.preventDefault()
@@ -406,13 +439,13 @@ export default function Page() {
                                 <label className="block mb-1 text-sm text-gray-700">요일</label>
                                 <select
                                     className="w-full border border-white/30 px-2 py-1 rounded-xl bg-white/60 backdrop-blur-sm text-gray-900 focus:bg-white/80 transition-all"
-                                    value={form.dayOfWeek}
-                                    onChange={(e) => setForm({ ...form, dayOfWeek: e.target.value as Subject["dayOfWeek"] })}
+                                    value={form.dayofweek}
+                                    onChange={(e) => setForm({ ...form, dayofweek: e.target.value })}
                                     required
                                 >
                                     {days.map((day) => (
-                                        <option key={day} value={day}>
-                                            {day}
+                                        <option key={day.value} value={day.value}>
+                                            {day.label}
                                         </option>
                                     ))}
                                 </select>
@@ -421,7 +454,7 @@ export default function Page() {
                                 <label className="block mb-1 text-sm text-gray-700">시작 시간</label>
                                 <select
                                     className="w-full border border-white/30 px-2 py-1 rounded-xl bg-white/60 backdrop-blur-sm text-gray-900 focus:bg-white/80 transition-all"
-                                    value={form.startTime}
+                                    value={form.starttime}
                                     onChange={(e) => handleStartTimeChange(e.target.value)}
                                     required
                                 >
@@ -437,13 +470,13 @@ export default function Page() {
                                 <label className="block mb-1 text-sm text-gray-700">종료 시간</label>
                                 <select
                                     className="w-full border border-white/30 px-2 py-1 rounded-xl bg-white/60 backdrop-blur-sm text-gray-900 focus:bg-white/80 transition-all"
-                                    value={form.endTime}
-                                    onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                                    value={form.endtime}
+                                    onChange={(e) => setForm({ ...form, endtime: e.target.value })}
                                     required
                                 >
                                     <option value="">선택</option>
                                     {timeOptions.map((time, idx) =>
-                                        idx > timeOptions.findIndex((t) => t === form.startTime) ? (
+                                        idx > timeOptions.findIndex((t) => t === form.starttime) ? (
                                             <option key={time} value={time}>
                                                 {time}
                                             </option>
@@ -482,12 +515,12 @@ export default function Page() {
                                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold disabled:opacity-50 shadow-lg transition-all"
                                 disabled={isLoading}
                             >
-                                {editMode ? "수정" : "추가"}
+                                {editId ? "수정" : "추가"}
                             </button>
                         </div>
                     </form>
                 </Modal>
-                {/* 프로필 모달 */}
+
                 <Modal
                     isOpen={showProfileModal}
                     onRequestClose={() => setShowProfileModal(false)}
@@ -498,7 +531,7 @@ export default function Page() {
                 >
                     <div className="flex flex-col items-center">
                         <div className="w-24 h-24 rounded-full bg-gradient-to-r from-indigo-100 to-purple-100 flex items-center justify-center mb-4 shadow-lg">
-                            <User className="h-12 w-12 text-indigo-700" />
+                            <UserIcon className="h-12 w-12 text-indigo-700" />
                         </div>
                         <h2 className="text-xl font-bold mb-1 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                             {userEmail ? userEmail : "로그인 정보 없음"}

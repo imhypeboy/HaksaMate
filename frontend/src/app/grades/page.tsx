@@ -1,39 +1,27 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, Edit, Trash2, TrendingUp, Award, BookOpen } from "lucide-react"
-import { isAuthenticated } from "@/lib/auth"
 import Modal from "react-modal"
+import { fetchGrades, addGrade, updateGrade, deleteGrade, Grade } from "@/lib/gradesApi"
+import { supabase } from "@/lib/supabaseClient"
 
-interface Grade {
-    id?: number
-    semester: string
-    subject: string
-    credit: number
-    grade: string
-    score: number
-}
-
-interface Semester {
-    name: string
-    gpa: number
-    totalCredits: number
+const gradeToScore = {
+    "A+": 4.5,
+    A: 4.0,
+    "B+": 3.5,
+    B: 3.0,
+    "C+": 2.5,
+    C: 2.0,
+    "D+": 1.5,
+    D: 1.0,
+    F: 0.0,
 }
 
 export default function GradesPage() {
     const router = useRouter()
-    const [grades, setGrades] = useState<Grade[]>([
-        { id: 1, semester: "2023-1", subject: "자료구조", credit: 3, grade: "A+", score: 4.5 },
-        { id: 2, semester: "2023-1", subject: "알고리즘", credit: 3, grade: "A", score: 4.0 },
-        { id: 3, semester: "2023-1", subject: "데이터베이스", credit: 3, grade: "B+", score: 3.5 },
-        { id: 4, semester: "2023-2", subject: "운영체제", credit: 3, grade: "A+", score: 4.5 },
-        { id: 5, semester: "2023-2", subject: "네트워크", credit: 3, grade: "A", score: 4.0 },
-        { id: 6, semester: "2024-1", subject: "소프트웨어공학", credit: 3, grade: "A+", score: 4.5 },
-    ])
-
+    const [grades, setGrades] = useState<Grade[]>([])
     const [showModal, setShowModal] = useState(false)
     const [editMode, setEditMode] = useState(false)
     const [selectedSemester, setSelectedSemester] = useState("전체")
@@ -44,31 +32,44 @@ export default function GradesPage() {
         grade: "A+",
         score: 4.5,
     })
-
-    const gradeToScore = {
-        "A+": 4.5,
-        A: 4.0,
-        "B+": 3.5,
-        B: 3.0,
-        "C+": 2.5,
-        C: 2.0,
-        "D+": 1.5,
-        D: 1.0,
-        F: 0.0,
-    }
+    const [userId, setUserId] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        if (!isAuthenticated()) {
-            router.push("/auth/login")
+        // 로그인 인증 및 userId 추출
+        const check = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                router.push("/auth/login")
+                return
+            }
+            setUserId(session.user.id)
+            if (typeof window !== "undefined") {
+                Modal.setAppElement("body")
+            }
         }
-        if (typeof window !== "undefined") {
-            Modal.setAppElement("body")
-        }
+        check()
     }, [router])
 
-    const getSemesters = (): Semester[] => {
-        const semesterMap = new Map<string, { totalScore: number; totalCredits: number }>()
+    useEffect(() => {
+        if (!userId) return
+        loadGrades(userId)
+    }, [userId])
 
+    const loadGrades = async (uid: string) => {
+        setIsLoading(true)
+        try {
+            const list = await fetchGrades(uid)
+            setGrades(list)
+        } catch (e) {
+            alert("성적 불러오기 오류")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const getSemesters = () => {
+        const semesterMap = new Map<string, { totalScore: number; totalCredits: number }>()
         grades.forEach((grade) => {
             if (!semesterMap.has(grade.semester)) {
                 semesterMap.set(grade.semester, { totalScore: 0, totalCredits: 0 })
@@ -77,7 +78,6 @@ export default function GradesPage() {
             semester.totalScore += grade.score * grade.credit
             semester.totalCredits += grade.credit
         })
-
         return Array.from(semesterMap.entries())
             .map(([name, data]) => ({
                 name,
@@ -87,7 +87,7 @@ export default function GradesPage() {
             .sort((a, b) => a.name.localeCompare(b.name))
     }
 
-    const getOverallGPA = (): number => {
+    const getOverallGPA = () => {
         const totalScore = grades.reduce((sum, grade) => sum + grade.score * grade.credit, 0)
         const totalCredits = grades.reduce((sum, grade) => sum + grade.credit, 0)
         return totalCredits > 0 ? Number((totalScore / totalCredits).toFixed(2)) : 0
@@ -98,27 +98,44 @@ export default function GradesPage() {
         return grades.filter((grade) => grade.semester === selectedSemester)
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (editMode && form.id) {
-            setGrades(grades.map((grade) => (grade.id === form.id ? form : grade)))
-        } else {
-            const newGrade = { ...form, id: Date.now() }
-            setGrades([...grades, newGrade])
+        if (!userId) return
+        try {
+            if (editMode && form.id) {
+                await updateGrade(form, userId)
+            } else {
+                await addGrade({
+                    semester: form.semester,
+                    subject: form.subject,
+                    credit: form.credit,
+                    grade: form.grade,
+                    score: form.score,
+                }, userId)
+            }
+            await loadGrades(userId)
+            resetForm()
+            setShowModal(false)
+        } catch (err) {
+            alert("저장 오류")
         }
-        resetForm()
-        setShowModal(false)
     }
 
     const handleEdit = (grade: Grade) => {
-        setForm(grade)
+        setForm({ ...grade })
         setEditMode(true)
         setShowModal(true)
     }
 
-    const handleDelete = (id: number) => {
+    const handleDeleteLocal = async (id?: number) => {
+        if (!userId || !id) return
         if (window.confirm("이 성적을 삭제하시겠습니까?")) {
-            setGrades(grades.filter((grade) => grade.id !== id))
+            try {
+                await deleteGrade(id, userId)
+                await loadGrades(userId)
+            } catch {
+                alert("삭제 오류")
+            }
         }
     }
 
@@ -258,19 +275,19 @@ export default function GradesPage() {
                                     <td className="border p-3 font-medium">{grade.subject}</td>
                                     <td className="border p-3 text-center">{grade.credit}</td>
                                     <td className="border p-3 text-center">
-                      <span
-                          className={`px-2 py-1 rounded text-sm font-medium ${
-                              grade.grade === "A+" || grade.grade === "A"
-                                  ? "bg-green-100 text-green-800"
-                                  : grade.grade === "B+" || grade.grade === "B"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : grade.grade === "C+" || grade.grade === "C"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : "bg-red-100 text-red-800"
-                          }`}
-                      >
-                        {grade.grade}
-                      </span>
+                                            <span
+                                                className={`px-2 py-1 rounded text-sm font-medium ${
+                                                    grade.grade === "A+" || grade.grade === "A"
+                                                        ? "bg-green-100 text-green-800"
+                                                        : grade.grade === "B+" || grade.grade === "B"
+                                                            ? "bg-blue-100 text-blue-800"
+                                                            : grade.grade === "C+" || grade.grade === "C"
+                                                                ? "bg-yellow-100 text-yellow-800"
+                                                                : "bg-red-100 text-red-800"
+                                                }`}
+                                            >
+                                                {grade.grade}
+                                            </span>
                                     </td>
                                     <td className="border p-3 text-center">{grade.score}</td>
                                     <td className="border p-3 text-center">
@@ -278,7 +295,7 @@ export default function GradesPage() {
                                             <button onClick={() => handleEdit(grade)} className="text-blue-600 hover:text-blue-800">
                                                 <Edit className="h-4 w-4" />
                                             </button>
-                                            <button onClick={() => handleDelete(grade.id!)} className="text-red-600 hover:text-red-800">
+                                            <button onClick={() => handleDeleteLocal(grade.id!)} className="text-red-600 hover:text-red-800">
                                                 <Trash2 className="h-4 w-4" />
                                             </button>
                                         </div>
@@ -287,6 +304,11 @@ export default function GradesPage() {
                             ))}
                             </tbody>
                         </table>
+                        {isLoading && (
+                            <div className="py-10 text-center text-lg text-gray-400">
+                                불러오는 중...
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -336,12 +358,9 @@ export default function GradesPage() {
                                 onChange={(e) => setForm({ ...form, credit: Number(e.target.value) })}
                                 required
                             >
-                                <option value={1}>1학점</option>
-                                <option value={2}>2학점</option>
-                                <option value={3}>3학점</option>
-                                <option value={4}>4학점</option>
-                                <option value={5}>5학점</option>
-                                <option value={6}>6학점</option>
+                                {[1,2,3,4,5,6].map((v)=>(
+                                    <option key={v} value={v}>{v}학점</option>
+                                ))}
                             </select>
                         </div>
                         <div>

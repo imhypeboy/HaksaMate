@@ -1,70 +1,20 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, Edit, Trash2, Calendar, Clock, CheckCircle } from "lucide-react"
-import { isAuthenticated } from "@/lib/auth"
 import Modal from "react-modal"
-
-interface Exam {
-    id?: number
-    subject: string
-    type: "중간고사" | "기말고사" | "퀴즈" | "과제"
-    date: string
-    time: string
-    location: string
-    status: "예정" | "진행중" | "완료"
-}
-
-interface ChecklistItem {
-    id: number
-    examId: number
-    task: string
-    completed: boolean
-}
+import {
+    fetchExams, addExam, updateExam, deleteExam,
+    fetchChecklist, addChecklistItem, toggleChecklistItem, deleteChecklistItem,
+    Exam, ChecklistItem
+} from "@/lib/examApi"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function ExamsPage() {
     const router = useRouter()
-    const [exams, setExams] = useState<Exam[]>([
-        {
-            id: 1,
-            subject: "자료구조",
-            type: "중간고사",
-            date: "2024-04-15",
-            time: "10:00",
-            location: "공학관 201호",
-            status: "완료",
-        },
-        {
-            id: 2,
-            subject: "알고리즘",
-            type: "기말고사",
-            date: "2024-06-20",
-            time: "14:00",
-            location: "공학관 301호",
-            status: "예정",
-        },
-        {
-            id: 3,
-            subject: "데이터베이스",
-            type: "퀴즈",
-            date: "2024-05-25",
-            time: "09:00",
-            location: "온라인",
-            status: "예정",
-        },
-    ])
-
-    const [checklist, setChecklist] = useState<ChecklistItem[]>([
-        { id: 1, examId: 2, task: "교재 6-10장 읽기", completed: false },
-        { id: 2, examId: 2, task: "과제 문제 복습", completed: true },
-        { id: 3, examId: 2, task: "모의고사 풀기", completed: false },
-        { id: 4, examId: 3, task: "SQL 기본 문법 정리", completed: false },
-        { id: 5, examId: 3, task: "실습 예제 풀이", completed: true },
-    ])
-
+    const [exams, setExams] = useState<Exam[]>([])
+    const [checklist, setChecklist] = useState<ChecklistItem[]>([])
     const [showModal, setShowModal] = useState(false)
     const [showChecklistModal, setShowChecklistModal] = useState(false)
     const [editMode, setEditMode] = useState(false)
@@ -78,46 +28,89 @@ export default function ExamsPage() {
         location: "",
         status: "예정",
     })
+    const [userId, setUserId] = useState<string | null>(null)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        if (!isAuthenticated()) {
-            router.push("/auth/login")
+        const check = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                router.push("/auth/login")
+                return
+            }
+            setUserId(session.user.id)
+            if (typeof window !== "undefined") Modal.setAppElement("body")
         }
-        if (typeof window !== "undefined") {
-            Modal.setAppElement("body")
-        }
+        check()
     }, [router])
 
-    const getExamsByStatus = (status: string) => {
-        if (status === "전체") return exams
-        return exams.filter((exam) => exam.status === status)
-    }
+    useEffect(() => {
+        if (!userId) return
+        loadExams(userId)
+    }, [userId])
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (editMode && form.id) {
-            setExams(exams.map((exam) => (exam.id === form.id ? form : exam)))
-        } else {
-            const newExam = { ...form, id: Date.now() }
-            setExams([...exams, newExam])
+    const loadExams = async (uid: string) => {
+        setLoading(true)
+        try {
+            const list = await fetchExams(uid)
+            setExams(list)
+        } catch {
+            alert("시험 불러오기 오류")
+        } finally {
+            setLoading(false)
         }
-        resetForm()
-        setShowModal(false)
     }
 
+    // 체크리스트 로드 (선택한 시험)
+    const loadChecklist = async (uid: string, examId: number) => {
+        try {
+            const list = await fetchChecklist(uid, examId)
+            setChecklist(list)
+        } catch {
+            setChecklist([])
+        }
+    }
+
+    // 시험 추가/수정
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!userId) return
+        try {
+            if (editMode && form.id) {
+                await updateExam(form, userId)
+            } else {
+                const newExam = await addExam(form, userId)
+                setSelectedExam(newExam) // 새 시험이면 checklist 띄울때 사용
+            }
+            await loadExams(userId)
+            resetForm()
+            setShowModal(false)
+        } catch {
+            alert("저장 오류")
+        }
+    }
+
+    // 시험 수정
     const handleEdit = (exam: Exam) => {
-        setForm(exam)
+        setForm({ ...exam })
         setEditMode(true)
         setShowModal(true)
     }
 
-    const handleDelete = (id: number) => {
+    // 시험 삭제
+    const handleDelete = async (id: number) => {
+        if (!userId) return
         if (window.confirm("정말로 이 시험을 삭제하시겠습니까?\n관련된 체크리스트도 함께 삭제됩니다.")) {
-            setExams(exams.filter((exam) => exam.id !== id))
-            setChecklist(checklist.filter((item) => item.examId !== id))
+            try {
+                await deleteExam(id, userId)
+                await loadExams(userId)
+            } catch {
+                alert("삭제 오류")
+            }
         }
     }
 
+    // 시험 추가 폼 초기화
     const resetForm = () => {
         setForm({
             subject: "",
@@ -130,36 +123,50 @@ export default function ExamsPage() {
         setEditMode(false)
     }
 
-    const openChecklistModal = (exam: Exam) => {
+    // 체크리스트 모달 열기
+    const openChecklistModal = async (exam: Exam) => {
         setSelectedExam(exam)
-        setShowChecklistModal(true)
+        if (userId && exam.id) {
+            await loadChecklist(userId, exam.id)
+            setShowChecklistModal(true)
+        }
     }
 
-    const addChecklistItem = () => {
-        if (newChecklistItem.trim() && selectedExam) {
-            const newItem: ChecklistItem = {
-                id: Date.now(),
-                examId: selectedExam.id!,
-                task: newChecklistItem.trim(),
-                completed: false,
-            }
-            setChecklist([...checklist, newItem])
+    // 체크리스트 항목 추가
+    const handleAddChecklistItem = async () => {
+        if (!newChecklistItem.trim() || !selectedExam?.id || !userId) return
+        try {
+            await addChecklistItem(newChecklistItem.trim(), selectedExam.id, userId)
+            await loadChecklist(userId, selectedExam.id)
             setNewChecklistItem("")
+        } catch {
+            alert("추가 오류")
         }
     }
 
-    const toggleChecklistItem = (id: number) => {
-        setChecklist(checklist.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item)))
+    // 체크리스트 항목 토글
+    const handleToggleChecklistItem = async (id: number, completed: boolean) => {
+        if (!userId) return
+        try {
+            await toggleChecklistItem(id, !completed, userId)
+            if (selectedExam?.id) await loadChecklist(userId, selectedExam.id)
+        } catch {
+            alert("토글 오류")
+        }
     }
 
-    const deleteChecklistItem = (id: number) => {
+    // 체크리스트 삭제
+    const handleDeleteChecklistItem = async (id: number) => {
+        if (!userId) return
+        if (!selectedExam?.id) return
         if (window.confirm("이 항목을 삭제하시겠습니까?")) {
-            setChecklist(checklist.filter((item) => item.id !== id))
+            try {
+                await deleteChecklistItem(id, userId)
+                await loadChecklist(userId, selectedExam.id)
+            } catch {
+                alert("삭제 오류")
+            }
         }
-    }
-
-    const getChecklistForExam = (examId: number) => {
-        return checklist.filter((item) => item.examId === examId)
     }
 
     return (
@@ -178,7 +185,6 @@ export default function ExamsPage() {
             </header>
 
             <div className="max-w-6xl mx-auto py-8 px-4">
-                {/* 시험 목록 */}
                 <div className="bg-white rounded-lg shadow-sm border p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-bold">시험 목록</h2>
@@ -199,10 +205,6 @@ export default function ExamsPage() {
                             <div
                                 key={exam.id}
                                 className="bg-white/80 backdrop-blur-md border-2 border-gray-200 rounded-2xl p-4 hover:shadow-xl transition-all shadow-lg"
-                                style={{
-                                    boxShadow:
-                                        "0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                                }}
                             >
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
@@ -231,7 +233,6 @@ export default function ExamsPage() {
                     {exam.status}
                   </span>
                                 </div>
-
                                 <div className="space-y-2 text-sm text-gray-600 mb-4">
                                     <div className="flex items-center">
                                         <Calendar className="h-4 w-4 mr-2" />
@@ -242,15 +243,14 @@ export default function ExamsPage() {
                                         {exam.time} | {exam.location}
                                     </div>
                                 </div>
-
                                 <div className="flex justify-between items-center gap-2">
                                     <button
                                         onClick={() => openChecklistModal(exam)}
                                         className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium flex items-center transition-colors flex-1"
                                     >
                                         <CheckCircle className="h-4 w-4 mr-2" />
-                                        체크리스트 ({getChecklistForExam(exam.id!).filter((item) => item.completed).length}/
-                                        {getChecklistForExam(exam.id!).length})
+                                        체크리스트 ({checklist.filter((item) => item.completed && item.exam_id === exam.id).length}/
+                                        {checklist.filter((item) => item.exam_id === exam.id).length})
                                     </button>
                                     <div className="flex gap-2">
                                         <button
@@ -272,6 +272,11 @@ export default function ExamsPage() {
                             </div>
                         ))}
                     </div>
+                    {loading && (
+                        <div className="py-10 text-center text-lg text-gray-400">
+                            불러오는 중...
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -394,10 +399,10 @@ export default function ExamsPage() {
                             value={newChecklistItem}
                             onChange={(e) => setNewChecklistItem(e.target.value)}
                             placeholder="새 할일 추가"
-                            onKeyPress={(e) => e.key === "Enter" && addChecklistItem()}
+                            onKeyPress={(e) => e.key === "Enter" && handleAddChecklistItem()}
                         />
                         <button
-                            onClick={addChecklistItem}
+                            onClick={handleAddChecklistItem}
                             className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded-md transition-colors font-medium"
                         >
                             추가
@@ -406,28 +411,30 @@ export default function ExamsPage() {
                 </div>
 
                 <div className="space-y-3 max-h-60 overflow-y-auto">
-                    {getChecklistForExam(selectedExam?.id || 0).map((item) => (
-                        <div
-                            key={item.id}
-                            className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                            <input
-                                type="checkbox"
-                                checked={item.completed}
-                                onChange={() => toggleChecklistItem(item.id)}
-                                className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                            <span className={`flex-1 ${item.completed ? "line-through text-gray-500" : ""}`}>{item.task}</span>
-                            <button
-                                onClick={() => deleteChecklistItem(item.id)}
-                                className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition-colors"
-                                title="삭제"
+                    {checklist
+                        .filter((item) => item.exam_id === selectedExam?.id)
+                        .map((item) => (
+                            <div
+                                key={item.id}
+                                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                                <Trash2 className="h-4 w-4" />
-                            </button>
-                        </div>
-                    ))}
-                    {getChecklistForExam(selectedExam?.id || 0).length === 0 && (
+                                <input
+                                    type="checkbox"
+                                    checked={item.completed}
+                                    onChange={() => handleToggleChecklistItem(item.id!, item.completed)}
+                                    className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <span className={`flex-1 ${item.completed ? "line-through text-gray-500" : ""}`}>{item.task}</span>
+                                <button
+                                    onClick={() => handleDeleteChecklistItem(item.id!)}
+                                    className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition-colors"
+                                    title="삭제"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ))}
+                    {checklist.filter((item) => item.exam_id === selectedExam?.id).length === 0 && (
                         <div className="text-center text-gray-500 py-8">
                             아직 체크리스트가 없습니다.
                             <br />

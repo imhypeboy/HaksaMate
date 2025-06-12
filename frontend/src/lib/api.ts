@@ -1,29 +1,43 @@
-import axios from 'axios';
-import { Subject } from '@/types/subject';
+// lib/api.ts
+import { supabase } from './supabaseClient'
+import type { Subject } from '@/types/subject'
 
-const API_BASE = 'http://localhost:8080/api/subjects';
+// 유저별 과목 목록 조회
+export async function fetchSubjects(userId: string): Promise<Subject[]> {
+    const { data, error } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('user_id', userId)
+        .order('starttime')
+    if (error) throw error
+    return data as Subject[]
+}
 
-export const fetchSubjects = async (): Promise<Subject[]> => {
-    const res = await axios.get(API_BASE);
-    return res.data;
-};
+// 과목 추가
+export async function createSubject(subject: Omit<Subject, 'id'>, userId: string) {
+    const { error } = await supabase
+        .from('subjects')
+        .insert([{ ...subject, user_id: userId }])
+    if (error) throw error
+}
 
-export const createSubject = async (subject: Subject): Promise<Subject> => {
-    const res = await axios.post(API_BASE, subject);
-    return res.data;
-};
+// 과목 수정
+export async function updateSubject(subject: Subject, userId: string) {
+    const { id, ...rest } = subject
+    const { error } = await supabase
+        .from('subjects')
+        .update({ ...rest })
+        .eq('id', id)
+        .eq('user_id', userId)
+    if (error) throw error
+}
 
-export const deleteSubject = async (id: number) => {
-    await axios.delete(`${API_BASE}/${id}`);
-};
-
-export const updateSubject = async (subject: Subject) => {
-    await axios.put(`${API_BASE}/${subject.id}`, subject);
-};
-
-
-// ⬇️ 추가: 시간표 생성 API
-export const generateTimetable = async () => {
-    const res = await axios.post('http://localhost:8080/api/timetable/generate');
-    return res.data;
-};
+// 과목 삭제
+export async function deleteSubject(id: number, userId: string) {
+    const { error } = await supabase
+        .from('subjects')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
+    if (error) throw error
+}
