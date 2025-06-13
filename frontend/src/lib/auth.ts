@@ -22,7 +22,7 @@ export async function registerUser({
     if (data.user) {
         const { error: insertError } = await supabase
             .from('profiles')
-            .insert([{ id: data.user.id, nickname: username, email }]);
+            .insert([{ id: data.user.id, name: username, email }]);
         if (insertError) throw insertError;
     }
 
