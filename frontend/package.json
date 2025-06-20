@@ -17,6 +17,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.3",
+    "react-hot-toast": "^2.5.2",
     "react-modal": "^3.16.3",
     "react-pro-sidebar": "^1.1.0"
   },
