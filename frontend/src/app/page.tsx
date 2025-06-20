@@ -268,15 +268,16 @@ export default function Page() {
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <div className="flex-1 font-sans pb-12">
-        <header className="bg-white text-gray-800 py-6 px-4 flex justify-between items-center shadow-sm border-b border-gray-200">
-          <div className="w-10"></div>
-          <h1 className="text-2xl font-bold text-gray-900">수강 시간표 작성</h1>
+        <header className="backdrop-blur-md bg-white/60 border-b border-white/30 shadow-lg flex justify-between items-center px-4 sm:px-8 py-5 rounded-b-3xl transition-all duration-300">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-extrabold tracking-tight text-blue-700 drop-shadow">HaksaMate</span>
+          </div>
           <button
             onClick={() => setShowProfileModal(true)}
-            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-colors shadow-sm"
+            className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 shadow-lg flex items-center justify-center hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-blue-400"
             aria-label="프로필"
           >
-            <UserIcon className="h-5 w-5 text-white" />
+            <UserIcon className="h-6 w-6 text-white" />
           </button>
         </header>
 
@@ -301,103 +302,102 @@ export default function Page() {
                 <p className="mt-2 text-gray-500">과목을 불러오는 중...</p>
               </div>
             ) : (
-              <ul className="space-y-2">
-                {subjects.length === 0 ? (
-                  <li className="text-gray-500 italic text-center py-4">
-                    등록된 과목이 없습니다. 위 버튼을 눌러 과목을 추가해주세요.
-                  </li>
-                ) : (
-                  subjects.map((subject) => (
-                    <li
-                      key={subject.id}
-                      className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg flex justify-between items-center transition-colors shadow-sm border border-gray-200"
-                    >
-                      <div>
-                        <span className="font-semibold text-gray-900">{subject.name}</span>
-                        <span className="ml-2 text-xs text-gray-500">
-                          {subject.dayofweek} {subject.starttime}~{subject.endtime} {subject.required && "(필수)"}
-                        </span>
+              <div className="flex flex-col md:flex-row gap-6 w-full max-w-6xl mx-auto mt-8">
+                {/* 과목 카드 그리드 */}
+                <div className="flex-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {subjects.map(subject => (
+                      <div className="bg-white/40 backdrop-blur-md rounded-xl shadow-md p-4 flex flex-col gap-1 min-w-0">
+                        <div className="font-bold text-gray-900 truncate">{subject.name}</div>
+                        <div className="text-xs text-gray-700 truncate">
+                          {subject.dayofweek} {subject.starttime}~{subject.endtime}
+                          {subject.required && <span className="text-pink-500 font-bold ml-1">필수</span>}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(subject)}
+                            className="p-2 rounded-full bg-blue-100/60 hover:bg-blue-200/80 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            aria-label="수정"
+                          >
+                            <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.536-6.536a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13z" /></svg>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(subject.id)}
+                            className="p-2 rounded-full bg-red-100/60 hover:bg-red-200/80 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+                            aria-label="삭제"
+                          >
+                            <svg className="h-4 w-4 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEdit(subject)}
-                          className="text-blue-600 hover:text-blue-800 font-semibold hover:underline"
-                        >
-                          수정
-                        </button>
-                        <button
-                          onClick={() => handleDelete(subject.id)}
-                          className="text-red-600 hover:text-red-800 font-semibold hover:underline"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
+                    ))}
+                  </div>
+                </div>
+                {/* 시간표 */}
+                <div className="flex-1 min-w-0">
+                  <div className="overflow-x-auto rounded-2xl border border-white/30 mt-4 shadow-2xl bg-white/40 backdrop-blur-md transition-all">
+                    <table className="min-w-full bg-transparent border-collapse text-sm">
+                      <thead>
+                        <tr>
+                          <th className="p-3 bg-white/60 border-b border-white/30 w-20 text-gray-700 font-semibold">시간</th>
+                          {days.map((day) => (
+                            <th
+                              key={day.value}
+                              className="p-3 bg-white/60 border-b border-white/30 text-gray-700 font-semibold"
+                            >
+                              {day.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hours.map((hour) => (
+                          <tr key={hour}>
+                            <td className="p-2 font-bold bg-white/50 border-b border-white/20">{hour}:00</td>
+                            {days.map((day) => {
+                              const key = `${day.value}-${hour}`
+                              const slotSubjects = timetableMap.get(key) || []
+                              return (
+                                <td className="p-2 border-b border-white/20 text-center transition-all" key={day.value}>
+                                  {slotSubjects.length > 0
+                                    ? slotSubjects.map((name, i) => (
+                                        <div
+                                          className="rounded-md bg-gradient-to-tr from-blue-200 to-cyan-100 text-blue-900 px-2 py-1 text-xs mb-1 border border-blue-100 shadow-sm animate-fadeIn"
+                                          key={i}
+                                        >
+                                          {name}
+                                        </div>
+                                      ))
+                                    : null}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
           <button
             onClick={handleGenerate}
-            className="bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-colors font-bold mt-4 mb-8 disabled:opacity-50 shadow-sm"
+            className="bg-gradient-to-tr from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white py-3 px-6 rounded-xl font-bold shadow-lg transition-all mt-4 mb-8 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-400"
+            aria-label="시간표 자동 생성"
             disabled={subjects.length === 0 || isLoading}
           >
             시간표 자동 생성
           </button>
-
-          {/* 시간표 양식: 등록된 과목 없어도 항상 출력 */}
-          <div className="overflow-x-auto rounded-lg border border-gray-200 mt-4 shadow-sm">
-            <table className="min-w-full bg-white border-collapse">
-              <thead>
-                <tr>
-                  <th className="p-3 bg-gray-100 border-b border-gray-200 w-20 text-gray-700 font-semibold">시간</th>
-                  {days.map((day) => (
-                    <th
-                      key={day.value}
-                      className="p-3 bg-gray-100 border-b border-gray-200 text-gray-700 font-semibold"
-                    >
-                      {day.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {hours.map((hour) => (
-                  <tr key={hour}>
-                    <td className="p-2 text-sm font-bold bg-gray-50 border-b border-gray-100">{hour}:00</td>
-                    {days.map((day) => {
-                      const key = `${day.value}-${hour}`
-                      const slotSubjects = timetableMap.get(key) || []
-                      return (
-                        <td className="p-2 border-b border-gray-100 text-center" key={day.value}>
-                          {slotSubjects.length > 0
-                            ? slotSubjects.map((name, i) => (
-                                <div
-                                  className="rounded-md bg-blue-100 text-blue-800 px-2 py-1 text-xs mb-1 border border-blue-200"
-                                  key={i}
-                                >
-                                  {name}
-                                </div>
-                              ))
-                            : null}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
 
         <Modal
           isOpen={showModal}
           onRequestClose={closeModal}
           contentLabel="과목 추가/수정"
-          className="bg-white text-gray-900 rounded-xl max-w-md mx-auto mt-24 p-6 shadow-lg outline-none border border-gray-200"
-          overlayClassName="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+          className="backdrop-blur-2xl bg-white/60 rounded-3xl max-w-md w-full mx-auto mt-24 p-8 shadow-2xl border border-white/30 animate-fadeIn"
+          overlayClassName="fixed inset-0 bg-gradient-to-br from-blue-100/60 to-pink-100/60 z-50 flex items-center justify-center"
           ariaHideApp={false}
         >
           <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-900">{editId ? "과목 수정" : "과목 추가"}</h2>
@@ -509,8 +509,8 @@ export default function Page() {
           isOpen={showProfileModal}
           onRequestClose={() => setShowProfileModal(false)}
           contentLabel="프로필"
-          className="bg-white text-gray-900 rounded-xl max-w-lg mx-auto mt-24 p-6 shadow-lg outline-none border border-gray-200"
-          overlayClassName="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+          className="backdrop-blur-2xl bg-white/60 rounded-3xl max-w-lg w-full mx-auto mt-24 p-8 shadow-2xl border border-white/30 animate-fadeIn"
+          overlayClassName="fixed inset-0 bg-gradient-to-br from-blue-100/60 to-pink-100/60 z-50 flex items-center justify-center"
           ariaHideApp={false}
         >
           <div className="flex flex-col items-center">
