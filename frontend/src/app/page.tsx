@@ -816,7 +816,7 @@ export default function Page() {
                       </label>
                       <input
                         type="text"
-                        className="w-full border-2 border-gray-200/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all backdrop-blur-sm bg-white/80"
+                        className="w-full border-2 border-gray-200/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all backdrop-blur-sm bg-white/80 text-gray-900 placeholder-gray-500"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         placeholder="예: 데이터구조와 알고리즘"
@@ -835,7 +835,7 @@ export default function Page() {
                           요일 <span className="text-red-500">*</span>
                         </label>
                         <select
-                          className="w-full border-2 border-gray-200/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all backdrop-blur-sm bg-white/80"
+                          className="w-full border-2 border-gray-200/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all backdrop-blur-sm bg-white/80 text-gray-900"
                           value={form.dayofweek}
                           onChange={(e) => setForm({ ...form, dayofweek: e.target.value })}
                           required
@@ -852,7 +852,7 @@ export default function Page() {
                           시작 <span className="text-red-500">*</span>
                         </label>
                         <select
-                          className="w-full border-2 border-gray-200/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all backdrop-blur-sm bg-white/80"
+                          className="w-full border-2 border-gray-200/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all backdrop-blur-sm bg-white/80 text-gray-900"
                           value={form.starttime}
                           onChange={(e) => handleStartTimeChange(e.target.value)}
                           required
@@ -870,7 +870,7 @@ export default function Page() {
                           종료 <span className="text-red-500">*</span>
                         </label>
                         <select
-                          className="w-full border-2 border-gray-200/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all backdrop-blur-sm bg-white/80"
+                          className="w-full border-2 border-gray-200/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all backdrop-blur-sm bg-white/80 text-gray-900"
                           value={form.endtime}
                           onChange={(e) => setForm({ ...form, endtime: e.target.value })}
                           required
