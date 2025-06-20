@@ -1,5 +1,4 @@
 "use client"
-
 import { useEffect, useState, useMemo } from "react"
 import Modal from "react-modal"
 import Sidebar from "./sidebar/sidebar"
